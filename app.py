@@ -2,27 +2,112 @@ import streamlit as st
 import pandas as pd
 import sqlite3
 
-# --- 1. CONFIGURACIÓN Y BASE DE DATOS ---
-st.set_page_config(page_title="Sorteo UDLAP - Eduardo Galván", layout="centered")
+# --- 1. CONFIGURACIÓN INICIAL ---
+st.set_page_config(page_title="Sorteo UDLAP | Gana una Residencia", layout="centered", initial_sidebar_state="collapsed")
 
-# Crear conexión a SQLite (se crea el archivo si no existe)
+# --- 2. INYECCIÓN DE CSS FRONTEND ---
+def aplicar_diseno():
+    css_magico = """
+    <style>
+    /* Importar tipografías */
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&family=Montserrat:wght@400;600&display=swap');
+
+    /* Variables de Color y Tipografía Global */
+    html, body, [class*="css"] {
+        font-family: 'Montserrat', sans-serif;
+        color: #4A4A4A; /* Gris asfalto para legibilidad */
+    }
+    h1, h2, h3, .price {
+        font-family: 'Nunito', sans-serif !important;
+    }
+
+    /* Color Principal (Azul cielo) + Patrón de Tréboles (SVG embebido al 5% opacidad) */
+    .stApp {
+        background-color: #E3F2FD; 
+        background-image: url('data:image/svg+xml;utf8,<svg width="60" height="60" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><text y="50" font-size="25" fill="%23000000" opacity="0.05">🍀</text></svg>');
+    }
+
+    /* Color de Acción (Naranja Vibrante) para botones CTA */
+    .stButton > button {
+        background-color: #FF6600 !important;
+        color: #FFFFFF !important;
+        border-radius: 30px !important;
+        font-weight: 900 !important;
+        border: none !important;
+        font-family: 'Nunito', sans-serif !important;
+        font-size: 1.3rem !important;
+        padding: 10px 25px !important;
+        width: 100%;
+        box-shadow: 0 8px 20px rgba(255, 102, 0, 0.4);
+        transition: all 0.3s ease;
+    }
+    .stButton > button:hover {
+        background-color: #E65C00 !important;
+        transform: translateY(-3px);
+        box-shadow: 0 12px 25px rgba(255, 102, 0, 0.5);
+    }
+
+    /* Tarjetas de Exhibición de Autos (Fondo Oscuro Neutro) */
+    .car-card {
+        background-color: #242424;
+        background-image: linear-gradient(145deg, #242424, #1a1a1a);
+        color: white;
+        padding: 20px;
+        border-radius: 20px;
+        text-align: center;
+        margin-bottom: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        border-top: 3px solid #FF6600;
+    }
+    .car-card h3 {
+        color: #FFFFFF;
+        margin-bottom: 5px;
+        font-size: 1.5rem;
+    }
+    .car-card p {
+        color: #A0A0A0;
+        font-size: 0.9rem;
+    }
+
+    /* Colores Secundarios para detalles (Mascota) */
+    .highlight-green { color: #2E8B57; font-weight: bold; }
+    .highlight-blue { color: #4169E1; font-weight: bold; }
+
+    /* Efecto Parallax suave de Billetes Cayendo */
+    @keyframes falling {
+        0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; }
+        10% { opacity: 0.6; }
+        90% { opacity: 0.6; }
+        100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+    }
+    .billete {
+        position: fixed;
+        font-size: 28px;
+        z-index: 0;
+        animation: falling 7s linear infinite;
+        pointer-events: none;
+    }
+    .b1 { left: 15%; animation-duration: 8s; animation-delay: 0s; }
+    .b2 { left: 85%; animation-duration: 6s; animation-delay: 2s; }
+    .b3 { left: 50%; animation-duration: 9s; animation-delay: 4s; }
+    </style>
+    """
+    st.markdown(css_magico, unsafe_allow_html=True)
+    # Inyectar billetes
+    st.markdown('''
+        <div class="billete b1">💸</div>
+        <div class="billete b2">💵</div>
+        <div class="billete b3">💸</div>
+    ''', unsafe_allow_html=True)
+
+# --- 3. BASE DE DATOS ---
 conn = sqlite3.connect('sorteo_udlap.db', check_same_thread=False)
 c = conn.cursor()
 
 def init_db():
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS boletos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            talonario TEXT,
-            boleto TEXT UNIQUE,
-            estatus TEXT,
-            comprador TEXT,
-            whatsapp TEXT,
-            metodo_pago TEXT,
-            pagado REAL
-        )
-    ''')
-    # Insertar los 33 boletos si la tabla está vacía
+    c.execute('''CREATE TABLE IF NOT EXISTS boletos 
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT, talonario TEXT, boleto TEXT UNIQUE, 
+                 estatus TEXT, comprador TEXT, whatsapp TEXT, metodo_pago TEXT, pagado REAL)''')
     c.execute("SELECT COUNT(*) FROM boletos")
     if c.fetchone()[0] == 0:
         talonarios = {
@@ -32,22 +117,46 @@ def init_db():
         }
         for tal, boletos in talonarios.items():
             for bol in boletos:
-                c.execute("INSERT INTO boletos (talonario, boleto, estatus, comprador, whatsapp, metodo_pago, pagado) VALUES (?, ?, 'Disponible', '', '', '', 0)", 
-                          (tal, bol))
+                c.execute("INSERT INTO boletos (talonario, boleto, estatus, comprador, whatsapp, metodo_pago, pagado) VALUES (?, ?, 'Disponible', '', '', '', 0)", (tal, bol))
         conn.commit()
 
 init_db()
 
-# --- 2. VISTA PÚBLICA (Para tus clientes) ---
+# --- 4. VISTA PÚBLICA (LANDING PAGE) ---
 def vista_publica():
-    st.image("https://www.udlap.mx/sorteo/assets/img/logo-sorteo-udlap.png", width=200) # Logo de ejemplo
-    st.title("🍀 Gran Sorteo UDLAP")
-    st.markdown("""
-    **¡Gánate una residencia de $34 Millones, un Porsche Macan o un BMW!**
-    Apóyame a mantener mi beca de Actuaría adquiriendo tu boleto. Costo: **$720 MXN**.
-    """)
+    aplicar_diseno()
     
-    # Consultar boletos disponibles
+    # Hero Section
+    st.markdown('<h1 style="text-align: center; color: #1F4E78; font-size: 2.5rem; margin-bottom: 0;">🍀 Gran Sorteo UDLAP</h1>', unsafe_allow_html=True)
+    st.markdown('<h2 style="text-align: center; color: #FF6600; font-size: 2rem;">Boleto: $720 MXN</h2>', unsafe_allow_html=True)
+    st.markdown("""
+    <p style="text-align: center; font-size: 1.1rem;">
+    Participa por una <b>Residencia de $34,000,000 MXN totalmente amueblada</b>.<br>
+    Al asegurar tu lugar, me apoyas directamente a mantener mi beca para continuar mi carrera. ¡El Sorteo es el 21 de Noviembre!
+    </p>
+    """, unsafe_allow_html=True)
+
+    # Exhibición de Autos (Cards)
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown('''
+        <div class="car-card">
+            <span style="font-size: 40px;">🏎️</span>
+            <h3>Porsche Macan</h3>
+            <p>Eléctrica, lujo absoluto y velocidad sin límites.</p>
+        </div>
+        ''', unsafe_allow_html=True)
+    with col2:
+        st.markdown('''
+        <div class="car-card">
+            <span style="font-size: 40px;">🚘</span>
+            <h3>BMW Z4 / Audi A5</h3>
+            <p>Vehículos premium y decenas de cheques millonarios.</p>
+        </div>
+        ''', unsafe_allow_html=True)
+
+    # Formulario
+    st.markdown("### 👇 Asegura tu boleto ahora")
     df_disponibles = pd.read_sql("SELECT boleto FROM boletos WHERE estatus='Disponible'", conn)
     boletos_lista = df_disponibles['boleto'].tolist()
     
@@ -56,13 +165,13 @@ def vista_publica():
         return
 
     with st.form("registro_boleto"):
-        nombre = st.text_input("Tu Nombre Completo *")
-        whatsapp = st.text_input("Tu WhatsApp *")
-        boletos_select = st.multiselect("Selecciona los boletos que quieres apartar *", boletos_lista)
-        metodo = st.radio("¿Cómo prefieres pagarlo? *", 
-                          ["De contado ($720)", "Plan 3 Quincenas (Enganche $120 + 2 pagos de $300)"])
+        nombre = st.text_input("Tu Nombre Completo")
+        whatsapp = st.text_input("Tu WhatsApp")
+        boletos_select = st.multiselect("¿Qué números te dan más suerte?", boletos_lista)
+        metodo = st.radio("Método de pago preferido", 
+                          ["Pago Único (Transferencia $720)", "Plan 3 Quincenas (Enganche $120 + 2 de $300)"])
         
-        submit = st.form_submit_button("¡Apartar mis boletos!")
+        submit = st.form_submit_button("¡COMPRAR MI BOLETO!")
         
         if submit:
             if nombre and whatsapp and boletos_select:
@@ -70,63 +179,46 @@ def vista_publica():
                     c.execute("UPDATE boletos SET estatus='Apartado', comprador=?, whatsapp=?, metodo_pago=? WHERE boleto=?", 
                               (nombre, whatsapp, metodo, b))
                 conn.commit()
-                st.success(f"¡Gracias {nombre}! Tus boletos han sido apartados. Te contactaré por WhatsApp para los detalles de pago.")
+                st.success(f"¡Éxito {nombre}! Tus números están apartados. Te enviaré un WhatsApp en unos minutos.")
                 st.balloons()
             else:
-                st.warning("Por favor, llena todos los campos obligatorios.")
+                st.warning("Por favor, llena tus datos para apartar tus boletos.")
 
-# --- 3. VISTA PRIVADA (Tu CRM / Panel de Control) ---
+# --- 5. VISTA PRIVADA ---
 def vista_admin():
     st.title("⚙️ Panel de Administración")
     password = st.text_input("Contraseña de acceso", type="password")
     
-    if password == "udlap2026": # ¡Cambia esta contraseña!
+    if password == "udlap2026": 
         st.success("Acceso concedido.")
-        
-        # Dashboard Rápido
         df = pd.read_sql("SELECT * FROM boletos", conn)
         total_recaudado = df['pagado'].sum()
         boletos_vendidos = len(df[df['estatus'].isin(['Apartado', 'Pagado Total'])])
         
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Dinero Recaudado", f"${total_recaudado:,.2f}")
-        col2.metric("Boletos Colocados", f"{boletos_vendidos} / 30")
-        col3.metric("Faltante para Meta", f"${21600 - total_recaudado:,.2f}")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Dinero Recaudado", f"${total_recaudado:,.2f}")
+        c2.metric("Boletos Colocados", f"{boletos_vendidos} / 30")
+        c3.metric("Faltante", f"${21600 - total_recaudado:,.2f}")
         
-        st.subheader("Gestión de Boletos y Pagos")
+        st.dataframe(df[['talonario', 'boleto', 'estatus', 'comprador', 'pagado']], use_container_width=True)
         
-        # Filtro
-        filtro_estatus = st.selectbox("Filtrar por estatus", ["Todos", "Disponible", "Apartado", "Pagado Total"])
-        if filtro_estatus != "Todos":
-            df = df[df['estatus'] == filtro_estatus]
-            
-        st.dataframe(df[['talonario', 'boleto', 'estatus', 'comprador', 'metodo_pago', 'pagado']], use_container_width=True)
-        
-        # Módulo de Cobranza (Actualizar pagos)
-        st.subheader("💰 Registrar Pago / Abono")
+        st.subheader("💰 Registrar Cobro")
         with st.form("actualizar_pago"):
             boleto_a_pagar = st.selectbox("Selecciona el boleto", df[df['estatus'] != 'Disponible']['boleto'].tolist())
             monto_abono = st.number_input("Monto a abonar", min_value=0.0, step=50.0)
-            
-            if st.form_submit_button("Registrar Cobro"):
+            if st.form_submit_button("Registrar"):
                 if boleto_a_pagar:
-                    # Obtener pago actual
-                    c.execute("SELECT pagado FROM boletos WHERE boleto=?", (boleto_a_pagar,))
-                    pagado_actual = c.fetchone()[0]
+                    pagado_actual = c.execute("SELECT pagado FROM boletos WHERE boleto=?", (boleto_a_pagar,)).fetchone()[0]
                     nuevo_pago = pagado_actual + monto_abono
-                    
                     nuevo_estatus = "Pagado Total" if nuevo_pago >= 720 else "Apartado"
-                    
                     c.execute("UPDATE boletos SET pagado=?, estatus=? WHERE boleto=?", (nuevo_pago, nuevo_estatus, boleto_a_pagar))
                     conn.commit()
-                    st.success(f"Cobro registrado. Total pagado de este boleto: ${nuevo_pago}")
+                    st.success(f"Cobro registrado.")
                     st.rerun()
 
-# --- 4. CONTROLADOR DE VISTAS ---
-st.sidebar.title("Navegación")
-opcion = st.sidebar.radio("Ir a:", ["Registro Público", "Acceso Admin (Eduardo)"])
-
-if opcion == "Registro Público":
+# --- 6. NAVEGADOR ---
+opcion = st.sidebar.radio("Menú", ["Sorteo (Público)", "Admin (Privado)"])
+if opcion == "Sorteo (Público)":
     vista_publica()
 else:
     vista_admin()
