@@ -177,11 +177,32 @@ def vista_publica():
 
 # --- 5. VISTA PRIVADA ---
 def vista_admin():
-    st.title("Panel  de Administración")
-    password = st.text_input("Contraseña de acceso", type="password")
+    st.title("⚙️ Panel de Administración")
     
-    if password == st.secrets["admin_password"]:
+    # Iniciar la variable de estado si no existe
+    if 'autenticado' not in st.session_state:
+        st.session_state['autenticado'] = False
+
+    # Si no está autenticado, mostrar la caja de contraseña
+    if not st.session_state['autenticado']:
+        password = st.text_input("Contraseña de acceso", type="password")
+        if st.button("Entrar"):
+            # AQUÍ VALIDAMOS CON st.secrets COMO ACORDAMOS
+            if password == st.secrets["admin_password"]: 
+                st.session_state['autenticado'] = True
+                st.rerun() # Recargar la página para que desaparezca la caja de contraseña
+            else:
+                st.error("Contraseña incorrecta.")
+    
+    # Si ya está autenticado, mostrar el panel
+    if st.session_state['autenticado']:
         st.success("Acceso concedido.")
+        
+        # Botón para cerrar sesión (Opcional, pero recomendado)
+        if st.button("Cerrar Sesión"):
+            st.session_state['autenticado'] = False
+            st.rerun()
+
         df = pd.read_sql("SELECT * FROM boletos", conn)
         total_recaudado = df['pagado'].sum()
         boletos_vendidos = len(df[df['estatus'].isin(['Apartado', 'Pagado Total'])])
@@ -191,7 +212,7 @@ def vista_admin():
         c2.metric("Boletos Colocados", f"{boletos_vendidos} / 30")
         c3.metric("Faltante", f"${21600 - total_recaudado:,.2f}")
         
-        st.dataframe(df[['talonario', 'boleto', 'estatus', 'comprador', 'pagado']], width='stretch')
+        st.dataframe(df[['talonario', 'boleto', 'estatus', 'comprador', 'pagado']], use_container_width=True)
         
         st.subheader("💰 Registrar Cobro")
         with st.form("actualizar_pago"):
@@ -204,7 +225,7 @@ def vista_admin():
                     nuevo_estatus = "Pagado Total" if nuevo_pago >= 720 else "Apartado"
                     c.execute("UPDATE boletos SET pagado=?, estatus=? WHERE boleto=?", (nuevo_pago, nuevo_estatus, boleto_a_pagar))
                     conn.commit()
-                    st.success(f"Cobro registrado.")
+                    st.success("Cobro registrado.")
                     st.rerun()
 
 # --- 6. NAVEGADOR ---
