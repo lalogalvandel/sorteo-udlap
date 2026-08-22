@@ -273,7 +273,7 @@ def vista_publica():
     st.markdown("""
     <div class="bio-card">
         <p>
-            Soy Lalo Galván, estudiante de tercer semestre de Actuaría en la UDLAP. La venta de estos boletos
+            ¡Hola! Soy Lalo Galván, estudiante de tercer semestre de Actuaría en la UDLAP. La venta de estos boletos
             es el requisito principal para conservar mi apoyo educativo. Al apartar el tuyo no solo participas
             por la residencia, los autos y los cheques del sorteo: me ayudas de forma directa a continuar con
             mi carrera.
