@@ -5,11 +5,11 @@ import psycopg2
 # --- 1. CONFIGURACIÓN INICIAL ---
 st.set_page_config(page_title="Sorteo UDLAP | Lalo Galván", layout="centered", initial_sidebar_state="collapsed")
 
-# Metas del panel de administración (mismos valores que el original: 30 boletos / $21,600)
+# Metas del panel de administración
 META_BOLETOS = 30
 META_MONTO = 21600
 
-# --- 2. INYECCIÓN DE CSS FRONTEND ---
+# --- 2. INYECCIÓN DE CSS FRONTEND (Se llama de inmediato para evitar parpadeos) ---
 def aplicar_diseno():
     css = """
     <style>
@@ -27,102 +27,150 @@ def aplicar_diseno():
         --muted: #726D5F;
     }
 
-    html, body, [class*="css"] { font-family: 'Inter', sans-serif; color: var(--ink); }
-    .stApp { background-color: var(--paper); }
+    /* 1. BLINDAJE ANTI-MODO OSCURO */
+    html, body, .stApp { 
+        font-family: 'Inter', sans-serif; 
+        background-color: var(--paper) !important;
+    }
     .block-container { max-width: 760px; padding-top: 2.4rem; padding-bottom: 4rem; }
 
-    h1, h2, h3 { font-family: 'Source Serif 4', serif !important; color: var(--green) !important; font-weight: 600 !important; }
+    /* Textos generales */
     p, span, label, li { color: var(--ink); }
+    h1, h2, h3 { font-family: 'Source Serif 4', serif !important; color: var(--green); font-weight: 600 !important; }
 
-    /* ---------- Hero / letterhead ---------- */
+    /* CLASE INFALIBLE PARA EL TÍTULO PRINCIPAL */
+    .titulo-principal {
+        font-family: 'Source Serif 4', serif !important; 
+        font-size: 2.3rem !important; 
+        font-weight: 700 !important; 
+        color: #FDFBF7 !important; /* Blanco marfil forzado */
+        margin-bottom: 0.7rem !important; 
+        text-shadow: 0px 4px 10px rgba(0,0,0,0.3) !important; 
+        line-height: 1.2 !important;
+    }
+
+    /* 2. CORRECCIÓN FLECHITA LATERAL: Ocultar basura visual, pero mantener flecha de menú */
+    #MainMenu, footer, .stDeployButton {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    header { background: transparent !important; }
+
+    /* ---------- Hero / letterhead (CORRECCIÓN DE COLORIMETRÍA) ---------- */
     .hero {
         background: linear-gradient(165deg, var(--green) 0%, var(--green-deep) 100%);
-        border-radius: 4px; padding: 2.5rem 2rem 2.1rem; text-align: center; margin-bottom: 1.6rem;
+        border-radius: 8px; padding: 2.5rem 2rem 2.1rem; text-align: center; margin-bottom: 1.6rem;
+        box-shadow: 0 10px 30px rgba(20,42,32,0.2);
     }
     .hero .eyebrow {
         font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.16em; font-size: 0.72rem;
         color: var(--gold-soft); text-transform: uppercase; margin-bottom: 0.9rem;
     }
-    .hero h1 { color: #F6F1E4 !important; font-size: 2.05rem !important; margin: 0 0 0.7rem !important; line-height: 1.18; }
+    .hero h1 { color: #FFFFFF !important; font-size: 2.2rem !important; margin: 0 0 0.7rem !important; line-height: 1.18; }
     .hero .rule { width: 38px; height: 1px; background: var(--gold-soft); margin: 0 auto 0.7rem; opacity: 0.65; }
-    .hero .meta { font-family: 'IBM Plex Mono', monospace; color: #EDE7D6; font-size: 0.95rem; opacity: 0.92; }
+    .hero .meta { font-family: 'IBM Plex Mono', monospace; color: #F6F1E4 !important; font-size: 0.95rem; opacity: 0.92; }
 
-    .teaser { text-align: center; color: var(--muted); font-size: 1.02rem; line-height: 1.6; margin: 0 0 1.8rem; }
+    .teaser { text-align: center; color: var(--muted); font-size: 1.05rem; line-height: 1.6; margin: 0 0 1.8rem; }
     .teaser b { color: var(--ink); font-weight: 600; }
 
     /* ---------- Bio card ---------- */
     .bio-card {
-        background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--green);
-        padding: 1.6rem 1.8rem; border-radius: 3px; margin-bottom: 2.2rem;
+        background: var(--card) !important; border: 1px solid var(--line); border-left: 4px solid var(--green);
+        padding: 1.6rem 1.8rem; border-radius: 6px; margin-bottom: 2.2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.02);
     }
-    .bio-card p { line-height: 1.68; margin: 0; font-size: 1rem; }
-    .bio-card .firma { font-family: 'Source Serif 4', serif; font-style: italic; color: var(--green); font-size: 1.02rem; display: block; margin-top: 1rem; }
+    .bio-card p { line-height: 1.68; margin: 0; font-size: 1.05rem; color: var(--ink) !important; }
+    .bio-card .firma { font-family: 'Source Serif 4', serif; font-style: italic; color: var(--green) !important; font-size: 1.1rem; display: block; margin-top: 1rem; }
 
     /* ---------- Section headers ---------- */
     .section-label {
         font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.14em; text-transform: uppercase;
-        font-size: 0.7rem; color: var(--muted); text-align: center; margin: 0 0 0.35rem;
+        font-size: 0.75rem; color: var(--muted); text-align: center; margin: 0 0 0.35rem;
     }
-    .section-title { font-family: 'Source Serif 4', serif; text-align: center; color: var(--green); font-size: 1.5rem; margin: 0 0 1.5rem; font-weight: 600; }
+    .section-title { font-family: 'Source Serif 4', serif; text-align: center; color: var(--green); font-size: 1.6rem; margin: 0 0 1.5rem; font-weight: 600; }
 
     /* ---------- Prize cards ---------- */
-    .prize-card { border-radius: 3px; padding: 1.5rem 1.4rem; height: 100%; }
-    .prize-card.tier-1 { background: linear-gradient(165deg, var(--green) 0%, var(--green-deep) 100%); color: #F6F1E4; }
-    .prize-card.tier-2 { background: #fff; border: 1px solid var(--line); }
-    .prize-card .rank { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; }
-    .prize-card.tier-1 .rank { color: var(--gold-soft); }
-    .prize-card.tier-2 .rank { color: var(--gold); }
-    .prize-card h4 { font-family: 'Source Serif 4', serif; font-size: 1.12rem; margin: 0.55rem 0 0.15rem; font-weight: 600; }
-    .prize-card.tier-1 h4 { color: #fff; }
-    .prize-card.tier-2 h4 { color: var(--green); }
+    .prize-card { border-radius: 8px; padding: 1.5rem 1.4rem; height: 100%; box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
+    .prize-card.tier-1 { background: linear-gradient(165deg, var(--green) 0%, var(--green-deep) 100%); }
+    .prize-card.tier-2 { background: #fff !important; border: 1px solid var(--line); }
+    
+    .prize-card .rank { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; }
+    
+    .prize-card.tier-1 h4, .prize-card.tier-1 p, .prize-card.tier-1 span, .prize-card.tier-1 li { color: #FFFFFF !important; }
+    .prize-card.tier-1 .rank, .prize-card.tier-1 .value { color: var(--gold-soft) !important; }
+    
+    .prize-card.tier-2 h4 { color: var(--green) !important; }
+    .prize-card.tier-2 p, .prize-card.tier-2 span, .prize-card.tier-2 li { color: var(--ink) !important; }
+    .prize-card.tier-2 .rank, .prize-card.tier-2 .value { color: var(--gold) !important; }
+    
+    .prize-card h4 { font-family: 'Source Serif 4', serif; font-size: 1.15rem; margin: 0.55rem 0 0.15rem; font-weight: 600; }
     .prize-card .sub { font-size: 0.86rem; opacity: 0.85; display: block; margin-bottom: 0.5rem; }
-    .prize-card ul { margin: 0.5rem 0; padding-left: 1.05rem; font-size: 0.92rem; line-height: 1.55; }
-    .prize-card .value { font-family: 'IBM Plex Mono', monospace; font-weight: 600; margin-top: 0.65rem; display: block; font-size: 0.95rem; }
-    .prize-card.tier-1 .value { color: var(--gold-soft); }
-    .prize-card.tier-2 .value { color: var(--gold); }
+    .prize-card ul { margin: 0.5rem 0; padding-left: 1.05rem; font-size: 0.95rem; line-height: 1.55; }
+    .prize-card .value { font-family: 'IBM Plex Mono', monospace; font-weight: 600; margin-top: 0.8rem; display: block; font-size: 1rem; }
 
-    /* ---------- Data tables (listas reescritas como tabla) ---------- */
-    .data-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin: 0.3rem 0 0.6rem; }
+    /* ---------- Data tables ---------- */
+    .data-table { width: 100%; border-collapse: collapse; font-size: 0.95rem; margin: 0.3rem 0 0.6rem; }
     .data-table th {
-        text-align: left; font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; letter-spacing: 0.08em;
-        text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--line); padding: 0.5rem 0.6rem;
+        text-align: left; font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; letter-spacing: 0.08em;
+        text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--line); padding: 0.6rem;
     }
-    .data-table td { padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--line); }
-    .data-table td.num { font-family: 'IBM Plex Mono', monospace; white-space: nowrap; }
+    .data-table td { padding: 0.6rem; border-bottom: 1px solid var(--line); color: var(--ink) !important; }
+    .data-table td.num { font-family: 'IBM Plex Mono', monospace; white-space: nowrap; font-weight: 600; color: var(--green) !important; }
 
     /* ---------- Legal / mechanics ---------- */
-    .legal-block { margin-bottom: 1.1rem; }
-    .legal-block .lbl { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); display: block; margin-bottom: 0.3rem; }
-    .legal-block p { font-size: 0.94rem; line-height: 1.6; margin: 0; color: var(--ink); }
+    .legal-block { margin-bottom: 1.2rem; }
+    .legal-block .lbl { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); display: block; margin-bottom: 0.3rem; }
+    .legal-block p { font-size: 0.95rem; line-height: 1.6; margin: 0; color: var(--ink) !important; }
 
     /* ---------- Buttons ---------- */
     .stButton > button, [data-testid="stFormSubmitButton"] > button {
-        background: var(--green) !important; color: #F6F1E4 !important; border: none !important;
-        border-radius: 3px !important; font-family: 'Inter', sans-serif !important; font-weight: 600 !important;
-        letter-spacing: 0.01em; padding: 0.7rem 1.4rem !important; width: 100%; box-shadow: none !important;
-        transition: background 0.15s ease, transform 0.15s ease;
+        background: var(--green) !important; border: none !important;
+        border-radius: 6px !important; width: 100%; box-shadow: 0 4px 10px rgba(30,58,45,0.2) !important;
+        transition: background 0.2s ease, transform 0.1s ease;
+        padding: 0.8rem 1.4rem !important;
+    }
+    .stButton > button p, [data-testid="stFormSubmitButton"] > button p, 
+    .stButton > button div, [data-testid="stFormSubmitButton"] > button div {
+        color: #FFFFFF !important; 
+        font-family: 'Inter', sans-serif !important; 
+        font-weight: 600 !important;
+        letter-spacing: 0.02em;
+        font-size: 1.1rem !important;
     }
     .stButton > button:hover, [data-testid="stFormSubmitButton"] > button:hover {
-        background: var(--green-deep) !important; transform: translateY(-1px);
+        background: var(--green-deep) !important; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(30,58,45,0.3) !important;
     }
 
     /* ---------- Inputs ---------- */
-    .stTextInput input, .stNumberInput input { border-radius: 3px !important; border-color: var(--line) !important; }
-    .stTextInput input:focus, .stNumberInput input:focus { border-color: var(--green) !important; box-shadow: 0 0 0 1px var(--green) !important; }
+    .stTextInput label p, .stNumberInput label p, .stRadio label p, .stMultiSelect label p { color: var(--green) !important; font-weight: 600; }
+    .stTextInput input, .stNumberInput input { 
+        border-radius: 4px !important; border-color: var(--line) !important; 
+        background-color: #FFFFFF !important; color: var(--ink) !important; 
+        padding: 0.6rem !important;
+    }
+    .stTextInput input:focus, .stNumberInput input:focus { border-color: var(--gold) !important; box-shadow: 0 0 0 1px var(--gold) !important; }
+    
+    [data-baseweb="select"] { background-color: #FFFFFF !important; border-radius: 4px !important; border-color: var(--line) !important; }
+    [data-baseweb="radio"] div { color: var(--ink) !important; }
 
     /* ---------- Expanders ---------- */
-    [data-testid="stExpander"] { border: 1px solid var(--line) !important; border-radius: 3px !important; background: #fff; margin-bottom: 0.6rem; }
-    [data-testid="stExpander"] summary { font-family: 'Source Serif 4', serif !important; color: var(--green) !important; font-weight: 600 !important; font-size: 1rem !important; }
+    [data-testid="stExpander"] { border: 1px solid var(--line) !important; border-radius: 6px !important; background: #FFFFFF !important; margin-bottom: 0.8rem; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+    [data-testid="stExpander"] summary { font-family: 'Source Serif 4', serif !important; color: var(--green) !important; font-weight: 600 !important; font-size: 1.1rem !important; padding: 1rem !important; }
+    [data-testid="stExpander"] summary p { color: var(--green) !important; font-weight: 600 !important; font-size: 1.1rem !important;}
+    [data-testid="stExpander"] div[role="region"] p, [data-testid="stExpander"] div[role="region"] li { color: var(--ink) !important; }
 
     /* ---------- Metrics (admin) ---------- */
-    [data-testid="stMetric"] { background: #fff; border: 1px solid var(--line); border-radius: 3px; padding: 0.9rem 1rem 0.7rem; }
-    [data-testid="stMetricValue"] { font-family: 'IBM Plex Mono', monospace !important; color: var(--green) !important; }
-    [data-testid="stMetricLabel"] { font-family: 'Inter', sans-serif !important; color: var(--muted) !important; }
+    [data-testid="stMetric"] { background: #FFFFFF !important; border: 1px solid var(--line); border-radius: 6px; padding: 1rem 1.2rem; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+    [data-testid="stMetricValue"] div { font-family: 'IBM Plex Mono', monospace !important; color: var(--green) !important; font-weight: 600 !important;}
+    [data-testid="stMetricLabel"] p { font-family: 'Inter', sans-serif !important; color: var(--muted) !important; font-weight: 600 !important; }
 
     hr { border-color: var(--line) !important; }
     </style>
     """
     st.markdown(css, unsafe_allow_html=True)
+
+# Llama al diseño inmediatamente para que cargue con la página
+aplicar_diseno()
 
 
 def render_prize_table(rows):
@@ -132,14 +180,12 @@ def render_prize_table(rows):
     html += "</tbody></table>"
     st.markdown(html, unsafe_allow_html=True)
 
-
 def render_benefit_table(rows):
     html = "<table class='data-table'><thead><tr><th>Comercio</th><th>Beneficio</th></tr></thead><tbody>"
     for negocio, beneficio in rows:
         html += f"<tr><td class='num'>{negocio}</td><td>{beneficio}</td></tr>"
     html += "</tbody></table>"
     st.markdown(html, unsafe_allow_html=True)
-
 
 # --- 3. BASE DE DATOS (PostgreSQL) ---
 conn = psycopg2.connect(st.secrets["db_url"])
@@ -169,11 +215,13 @@ def vista_publica():
     st.markdown("""
     <div class="hero">
         <div class="eyebrow">Sorteo UDLAP &nbsp;·&nbsp; 40.ª edición</div>
-        <h1>Cuadragésimo Sorteo UDLAP</h1>
+        <div class="titulo-principal">Cuadragésimo Sorteo UDLAP</div>
         <div class="rule"></div>
         <div class="meta">Boleto: $720 MXN &nbsp;·&nbsp; Sorteo: 21 de noviembre de 2026</div>
     </div>
     """, unsafe_allow_html=True)
+
+
 
     st.markdown("""
     <p class="teaser">Participa por una <b>residencia valuada en $34,000,000 MXN</b>, totalmente amueblada,
@@ -195,7 +243,7 @@ def vista_publica():
     url_imagen = "https://i.postimg.cc/2jKnNdd4/premios-sorteo-jpg.png"
     st.markdown(f"""
     <div style="text-align:center; margin-bottom: 2.2rem;">
-        <img src="{url_imagen}" style="width:100%; border-radius:4px; box-shadow:0 10px 26px rgba(20,42,32,0.18); border:1px solid var(--line);">
+        <img src="{url_imagen}" style="width:100%; border-radius:6px; box-shadow:0 10px 26px rgba(20,42,32,0.18); border:1px solid var(--line);">
     </div>
     """, unsafe_allow_html=True)
 
@@ -309,7 +357,9 @@ def vista_publica():
     st.write("")
 
     # --- FORMULARIO DE COMPRA ---
-    st.markdown("### Aparta tu boleto")
+    st.markdown('<div class="section-label">Asegura tus números</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">Aparta tu boleto</div>', unsafe_allow_html=True)
+    
     df_disponibles = pd.read_sql("SELECT boleto FROM boletos WHERE estatus='Disponible'", conn)
     boletos_lista = df_disponibles['boleto'].tolist()
 
@@ -339,7 +389,7 @@ def vista_publica():
 # --- 5. VISTA PRIVADA (ADMINISTRADOR) ---
 def vista_admin():
     st.markdown('<div class="section-label">Panel interno</div>', unsafe_allow_html=True)
-    st.title("Administración")
+    st.markdown('<div class="section-title" style="text-align: left; margin-bottom: 0.5rem;">Administración</div>', unsafe_allow_html=True)
 
     if 'autenticado' not in st.session_state:
         st.session_state['autenticado'] = False
@@ -370,8 +420,46 @@ def vista_admin():
         c3.metric("Faltante", f"${META_MONTO - total_recaudado:,.2f}")
 
         st.write("")
+        
+                # 1. Automatización: Crear un link directo a WhatsApp pre-llenado
+        def crear_link_wa(row):
+            import urllib.parse # Necesario para procesar emojis y saltos de línea
+            
+            if pd.isna(row['whatsapp']) or row['whatsapp'] == '': return None
+            # Limpiar el número (quitar espacios o guiones)
+            numero_limpio = ''.join(filter(str.isdigit, str(row['whatsapp'])))
+            nombre_cliente = str(row['comprador']).split()[0] # Tomar solo el primer nombre
+            
+            # Mensaje automatizado con formato para WhatsApp (usando * para negritas)
+            mensaje = f"""¡Hola {nombre_cliente}! Vi que apartaste el boleto {row['boleto']} del Sorteo UDLAP. ¡Mil gracias por apoyarme 😁🫶🏻! 
+
+Te escribo para pasarte los datos para el pago:
+
+*Moneda:* Peso Mexicano (MXN)
+*Beneficiario:* Eduardo Galván Del Rio
+*CLABE:* 646990404098884683
+*Banco:* STP (Calle Varsovia 36, Piso 6, CDMX)
+*Concepto:* Boleto {row['boleto']}
+
+Me mandas el comprobante por aquí en cuanto lo tengas para registrarlo en mi sistema. ¡Gracias!"""
+            
+            # Codificar el texto para URL
+            mensaje_url = urllib.parse.quote(mensaje)
+            
+            return f"https://wa.me/52{numero_limpio}?text={mensaje_url}"
+
+
+        # Aplicar la función a la base de datos para generar los links
+        df['Link_WA'] = df.apply(crear_link_wa, axis=1)
+
+        # 2. Mostrar la tabla con la columna de WhatsApp y el link clickeable
         st.dataframe(
-            df[['talonario', 'boleto', 'estatus', 'comprador', 'pagado']].style.format({'pagado': '${:,.2f}'}),
+            df[['boleto', 'estatus', 'comprador', 'whatsapp', 'pagado', 'Link_WA']],
+            column_config={
+                "pagado": st.column_config.NumberColumn("Pagado", format="$%f"),
+                "Link_WA": st.column_config.LinkColumn("Contactar", display_text="Abrir Chat 💬")
+            },
+            hide_index=True,
             use_container_width=True
         )
 
@@ -381,7 +469,6 @@ def vista_admin():
             monto_abono = st.number_input("Monto a abonar", min_value=0.0, step=50.0)
             if st.form_submit_button("Registrar"):
                 if boleto_a_pagar:
-                    # Corrección del bloque SQL
                     c.execute("SELECT pagado FROM boletos WHERE boleto=%s", (boleto_a_pagar,))
                     pagado_actual = c.fetchone()[0]
                     nuevo_pago = pagado_actual + monto_abono
@@ -393,7 +480,6 @@ def vista_admin():
                     st.rerun()
 
 # --- 6. NAVEGADOR ---
-aplicar_diseno()
 opcion = st.sidebar.radio("Menú", ["Sorteo (Público)", "Admin (Privado)"])
 if opcion == "Sorteo (Público)":
     vista_publica()
