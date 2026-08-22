@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import psycopg2
+import urllib.parse
 
 # --- 1. CONFIGURACIÓN INICIAL ---
 st.set_page_config(page_title="Sorteo UDLAP | Lalo Galván", layout="centered", initial_sidebar_state="collapsed")
@@ -9,7 +10,7 @@ st.set_page_config(page_title="Sorteo UDLAP | Lalo Galván", layout="centered", 
 META_BOLETOS = 30
 META_MONTO = 21600
 
-# --- 2. INYECCIÓN DE CSS FRONTEND (Se llama de inmediato para evitar parpadeos) ---
+# --- 2. INYECCIÓN DE CSS FRONTEND ---
 def aplicar_diseno():
     css = """
     <style>
@@ -28,7 +29,6 @@ def aplicar_diseno():
     }
 
     /* 1. BLINDAJE ANTI-MODO OSCURO */
-<<<<<<< HEAD
     html, body, .stApp { 
         font-family: 'Inter', sans-serif; 
         background-color: var(--paper) !important;
@@ -39,58 +39,64 @@ def aplicar_diseno():
     p, span, label, li { color: var(--ink); }
     h1, h2, h3 { font-family: 'Source Serif 4', serif !important; color: var(--green); font-weight: 600 !important; }
 
-    /* CLASE INFALIBLE PARA EL TÍTULO PRINCIPAL */
-    .titulo-principal {
-        font-family: 'Source Serif 4', serif !important; 
-        font-size: 2.3rem !important; 
-        font-weight: 700 !important; 
-        color: #FDFBF7 !important; /* Blanco marfil forzado */
-        margin-bottom: 0.7rem !important; 
-        text-shadow: 0px 4px 10px rgba(0,0,0,0.3) !important; 
-        line-height: 1.2 !important;
-    }
-
-=======
-    html, body, [class*="css"], .stApp { 
-        font-family: 'Inter', sans-serif; 
-        background-color: var(--paper) !important;
-        color: var(--ink) !important;
-    }
-    .block-container { max-width: 760px; padding-top: 2.4rem; padding-bottom: 4rem; }
-
-    p, span, label, li { color: var(--ink); }
-    /* Se quitó el !important del color para no chocar con la tarjeta Hero */
-    h1, h2, h3 { font-family: 'Source Serif 4', serif !important; color: var(--green); font-weight: 600 !important; }
-
->>>>>>> a608a38cc87539dd89cb31c98295a3e42026b5ca
-    /* 2. CORRECCIÓN FLECHITA LATERAL: Ocultar basura visual, pero mantener flecha de menú */
+    /* 2. CORRECCIÓN MENÚ SUPERIOR */
     #MainMenu, footer, .stDeployButton {
         display: none !important;
         visibility: hidden !important;
     }
     header { background: transparent !important; }
 
-    /* ---------- Hero / letterhead (CORRECCIÓN DE COLORIMETRÍA) ---------- */
+    /* ---------- Hero / Encabezado ---------- */
     .hero {
         background: linear-gradient(165deg, var(--green) 0%, var(--green-deep) 100%);
-        border-radius: 8px; padding: 2.5rem 2rem 2.1rem; text-align: center; margin-bottom: 1.6rem;
+        border-radius: 8px; 
+        padding: 2.5rem 2rem 2.1rem; 
+        text-align: center; 
+        margin-bottom: 1.6rem;
         box-shadow: 0 10px 30px rgba(20,42,32,0.2);
     }
     .hero .eyebrow {
-        font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.16em; font-size: 0.72rem;
-        color: var(--gold-soft); text-transform: uppercase; margin-bottom: 0.9rem;
+        font-family: 'IBM Plex Mono', monospace; 
+        letter-spacing: 0.16em; 
+        font-size: 0.75rem;
+        color: var(--gold-soft); 
+        text-transform: uppercase; 
+        margin-bottom: 0.9rem;
     }
-    .hero h1 { color: #FFFFFF !important; font-size: 2.2rem !important; margin: 0 0 0.7rem !important; line-height: 1.18; }
-    .hero .rule { width: 38px; height: 1px; background: var(--gold-soft); margin: 0 auto 0.7rem; opacity: 0.65; }
-    .hero .meta { font-family: 'IBM Plex Mono', monospace; color: #F6F1E4 !important; font-size: 0.95rem; opacity: 0.92; }
+    .titulo-principal {
+        font-family: 'Source Serif 4', serif !important; 
+        font-size: 2.3rem !important; 
+        font-weight: 700 !important; 
+        color: #FDFBF7 !important; 
+        margin-bottom: 0.7rem !important; 
+        text-shadow: 0px 4px 10px rgba(0,0,0,0.3) !important; 
+        line-height: 1.2 !important;
+    }
+    .hero .rule { 
+        width: 42px; 
+        height: 1px; 
+        background: var(--gold-soft); 
+        margin: 0 auto 0.8rem; 
+        opacity: 0.65; 
+    }
+    .hero .meta { 
+        font-family: 'IBM Plex Mono', monospace; 
+        color: #F6F1E4 !important; 
+        font-size: 0.95rem; 
+        opacity: 0.92; 
+    }
 
     .teaser { text-align: center; color: var(--muted); font-size: 1.05rem; line-height: 1.6; margin: 0 0 1.8rem; }
     .teaser b { color: var(--ink); font-weight: 600; }
 
     /* ---------- Bio card ---------- */
     .bio-card {
-        background: var(--card) !important; border: 1px solid var(--line); border-left: 4px solid var(--green);
-        padding: 1.6rem 1.8rem; border-radius: 6px; margin-bottom: 2.2rem;
+        background: var(--card) !important; 
+        border: 1px solid var(--line); 
+        border-left: 4px solid var(--green);
+        padding: 1.6rem 1.8rem; 
+        border-radius: 6px; 
+        margin-bottom: 2.2rem;
         box-shadow: 0 4px 15px rgba(0,0,0,0.02);
     }
     .bio-card p { line-height: 1.68; margin: 0; font-size: 1.05rem; color: var(--ink) !important; }
@@ -98,10 +104,22 @@ def aplicar_diseno():
 
     /* ---------- Section headers ---------- */
     .section-label {
-        font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.14em; text-transform: uppercase;
-        font-size: 0.75rem; color: var(--muted); text-align: center; margin: 0 0 0.35rem;
+        font-family: 'IBM Plex Mono', monospace; 
+        letter-spacing: 0.14em; 
+        text-transform: uppercase;
+        font-size: 0.75rem; 
+        color: var(--muted); 
+        text-align: center; 
+        margin: 0 0 0.35rem;
     }
-    .section-title { font-family: 'Source Serif 4', serif; text-align: center; color: var(--green); font-size: 1.6rem; margin: 0 0 1.5rem; font-weight: 600; }
+    .section-title { 
+        font-family: 'Source Serif 4', serif; 
+        text-align: center; 
+        color: var(--green); 
+        font-size: 1.6rem; 
+        margin: 0 0 1.5rem; 
+        font-weight: 600; 
+    }
 
     /* ---------- Prize cards ---------- */
     .prize-card { border-radius: 8px; padding: 1.5rem 1.4rem; height: 100%; box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
@@ -125,8 +143,14 @@ def aplicar_diseno():
     /* ---------- Data tables ---------- */
     .data-table { width: 100%; border-collapse: collapse; font-size: 0.95rem; margin: 0.3rem 0 0.6rem; }
     .data-table th {
-        text-align: left; font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; letter-spacing: 0.08em;
-        text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--line); padding: 0.6rem;
+        text-align: left; 
+        font-family: 'IBM Plex Mono', monospace; 
+        font-size: 0.7rem; 
+        letter-spacing: 0.08em;
+        text-transform: uppercase; 
+        color: var(--muted); 
+        border-bottom: 1px solid var(--line); 
+        padding: 0.6rem;
     }
     .data-table td { padding: 0.6rem; border-bottom: 1px solid var(--line); color: var(--ink) !important; }
     .data-table td.num { font-family: 'IBM Plex Mono', monospace; white-space: nowrap; font-weight: 600; color: var(--green) !important; }
@@ -138,8 +162,11 @@ def aplicar_diseno():
 
     /* ---------- Buttons ---------- */
     .stButton > button, [data-testid="stFormSubmitButton"] > button {
-        background: var(--green) !important; border: none !important;
-        border-radius: 6px !important; width: 100%; box-shadow: 0 4px 10px rgba(30,58,45,0.2) !important;
+        background: var(--green) !important; 
+        border: none !important;
+        border-radius: 6px !important; 
+        width: 100%; 
+        box-shadow: 0 4px 10px rgba(30,58,45,0.2) !important;
         transition: background 0.2s ease, transform 0.1s ease;
         padding: 0.8rem 1.4rem !important;
     }
@@ -152,14 +179,18 @@ def aplicar_diseno():
         font-size: 1.1rem !important;
     }
     .stButton > button:hover, [data-testid="stFormSubmitButton"] > button:hover {
-        background: var(--green-deep) !important; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(30,58,45,0.3) !important;
+        background: var(--green-deep) !important; 
+        transform: translateY(-2px); 
+        box-shadow: 0 6px 15px rgba(30,58,45,0.3) !important;
     }
 
     /* ---------- Inputs ---------- */
     .stTextInput label p, .stNumberInput label p, .stRadio label p, .stMultiSelect label p { color: var(--green) !important; font-weight: 600; }
     .stTextInput input, .stNumberInput input { 
-        border-radius: 4px !important; border-color: var(--line) !important; 
-        background-color: #FFFFFF !important; color: var(--ink) !important; 
+        border-radius: 4px !important; 
+        border-color: var(--line) !important; 
+        background-color: #FFFFFF !important; 
+        color: var(--ink) !important; 
         padding: 0.6rem !important;
     }
     .stTextInput input:focus, .stNumberInput input:focus { border-color: var(--gold) !important; box-shadow: 0 0 0 1px var(--gold) !important; }
@@ -183,7 +214,6 @@ def aplicar_diseno():
     """
     st.markdown(css, unsafe_allow_html=True)
 
-# Llama al diseño inmediatamente para que cargue con la página
 aplicar_diseno()
 
 
@@ -229,19 +259,11 @@ def vista_publica():
     st.markdown("""
     <div class="hero">
         <div class="eyebrow">Sorteo UDLAP &nbsp;·&nbsp; 40.ª edición</div>
-<<<<<<< HEAD
         <div class="titulo-principal">Cuadragésimo Sorteo UDLAP</div>
-=======
-        <div style="font-family: 'Source Serif 4', serif; font-size: 2.3rem; font-weight: 700; color: #FDFBF7 !important; margin-bottom: 0.7rem; text-shadow: 0px 4px 10px rgba(0,0,0,0.25); line-height: 1.2;">
-            Cuadragésimo Sorteo UDLAP
-        </div>
->>>>>>> a608a38cc87539dd89cb31c98295a3e42026b5ca
         <div class="rule"></div>
         <div class="meta">Boleto: $720 MXN &nbsp;·&nbsp; Sorteo: 21 de noviembre de 2026</div>
     </div>
     """, unsafe_allow_html=True)
-
-
 
     st.markdown("""
     <p class="teaser">Participa por una <b>residencia valuada en $34,000,000 MXN</b>, totalmente amueblada,
@@ -441,16 +463,12 @@ def vista_admin():
 
         st.write("")
         
-                # 1. Automatización: Crear un link directo a WhatsApp pre-llenado
+        # Automatización: Crear link directo a WhatsApp pre-llenado
         def crear_link_wa(row):
-            import urllib.parse # Necesario para procesar emojis y saltos de línea
-            
             if pd.isna(row['whatsapp']) or row['whatsapp'] == '': return None
-            # Limpiar el número (quitar espacios o guiones)
             numero_limpio = ''.join(filter(str.isdigit, str(row['whatsapp'])))
-            nombre_cliente = str(row['comprador']).split()[0] # Tomar solo el primer nombre
+            nombre_cliente = str(row['comprador']).split()[0]
             
-            # Mensaje automatizado con formato para WhatsApp (usando * para negritas)
             mensaje = f"""¡Hola {nombre_cliente}! Vi que apartaste el boleto {row['boleto']} del Sorteo UDLAP. ¡Mil gracias por apoyarme 😁🫶🏻! 
 
 Te escribo para pasarte los datos para el pago:
@@ -463,16 +481,12 @@ Te escribo para pasarte los datos para el pago:
 
 Me mandas el comprobante por aquí en cuanto lo tengas para registrarlo en mi sistema. ¡Gracias!"""
             
-            # Codificar el texto para URL
             mensaje_url = urllib.parse.quote(mensaje)
-            
             return f"https://wa.me/52{numero_limpio}?text={mensaje_url}"
 
-
-        # Aplicar la función a la base de datos para generar los links
         df['Link_WA'] = df.apply(crear_link_wa, axis=1)
 
-        # 2. Mostrar la tabla con la columna de WhatsApp y el link clickeable
+        # Mostrar tabla en panel de administración
         st.dataframe(
             df[['boleto', 'estatus', 'comprador', 'whatsapp', 'pagado', 'Link_WA']],
             column_config={
@@ -505,4 +519,3 @@ if opcion == "Sorteo (Público)":
     vista_publica()
 else:
     vista_admin()
-
