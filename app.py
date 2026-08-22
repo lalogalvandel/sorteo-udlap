@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import sqlite3
+import psycopg2
 
 # --- 1. CONFIGURACIÓN INICIAL ---
 st.set_page_config(page_title="Sorteo UDLAP | Gana una Residencia", layout="centered", initial_sidebar_state="collapsed")
@@ -100,14 +100,18 @@ def aplicar_diseno():
         <div class="billete b3">💸</div>
     ''', unsafe_allow_html=True)
 
-# --- 3. BASE DE DATOS ---
-conn = sqlite3.connect('sorteo_udlap.db', check_same_thread=False)
+# --- 3. BASE DE DATOS (PostgreSQL) ---
+# Nos conectamos usando la URL secreta
+conn = psycopg2.connect(st.secrets["db_url"])
+conn.autocommit = True # Esto hace que los cambios se guarden automáticamente
 c = conn.cursor()
 
 def init_db():
+    # PostgreSQL usa SERIAL en lugar de AUTOINCREMENT
     c.execute('''CREATE TABLE IF NOT EXISTS boletos 
-                 (id INTEGER PRIMARY KEY AUTOINCREMENT, talonario TEXT, boleto TEXT UNIQUE, 
+                 (id SERIAL PRIMARY KEY, talonario TEXT, boleto TEXT UNIQUE, 
                  estatus TEXT, comprador TEXT, whatsapp TEXT, metodo_pago TEXT, pagado REAL)''')
+    
     c.execute("SELECT COUNT(*) FROM boletos")
     if c.fetchone()[0] == 0:
         talonarios = {
@@ -117,8 +121,8 @@ def init_db():
         }
         for tal, boletos in talonarios.items():
             for bol in boletos:
-                c.execute("INSERT INTO boletos (talonario, boleto, estatus, comprador, whatsapp, metodo_pago, pagado) VALUES (?, ?, 'Disponible', '', '', '', 0)", (tal, bol))
-        conn.commit()
+                # PostgreSQL usa %s en lugar de ?
+                c.execute("INSERT INTO boletos (talonario, boleto, estatus, comprador, whatsapp, metodo_pago, pagado) VALUES (%s, %s, 'Disponible', '', '', '', 0) ON CONFLICT DO NOTHING", (tal, bol))
 
 init_db()
 
@@ -178,8 +182,7 @@ def vista_publica():
         if submit:
             if nombre and whatsapp and boletos_select:
                 for b in boletos_select:
-                    c.execute("UPDATE boletos SET estatus='Apartado', comprador=?, whatsapp=?, metodo_pago=? WHERE boleto=?", 
-                              (nombre, whatsapp, metodo, b))
+                    c.execute("UPDATE boletos SET estatus='Apartado', comprador=%s, whatsapp=%s, metodo_pago=%s WHERE boleto=%s", (nombre, whatsapp, metodo, b))
                 conn.commit()
                 st.success(f"¡Éxito {nombre}! Tus números están apartados. Te enviaré un WhatsApp en unos minutos.")
                 st.balloons()
@@ -231,7 +234,8 @@ def vista_admin():
             monto_abono = st.number_input("Monto a abonar", min_value=0.0, step=50.0)
             if st.form_submit_button("Registrar"):
                 if boleto_a_pagar:
-                    pagado_actual = c.execute("SELECT pagado FROM boletos WHERE boleto=?", (boleto_a_pagar,)).fetchone()[0]
+                    pagado_actual = c.execute("SELECT pagado FROM boletos WHERE boleto=%s", (boleto_a_pagar,))
+                    pagado_actual = c.fetchone()[0]
                     nuevo_pago = pagado_actual + monto_abono
                     nuevo_estatus = "Pagado Total" if nuevo_pago >= 720 else "Apartado"
                     c.execute("UPDATE boletos SET pagado=?, estatus=? WHERE boleto=?", (nuevo_pago, nuevo_estatus, boleto_a_pagar))
