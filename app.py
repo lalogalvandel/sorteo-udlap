@@ -5,7 +5,7 @@ import psycopg2
 # --- 1. CONFIGURACIÓN INICIAL ---
 st.set_page_config(page_title="Sorteo UDLAP | Lalo Galván", layout="centered", initial_sidebar_state="collapsed")
 
-# Metas del panel de administración (mismos valores que el original: 30 boletos / $21,600)
+# Metas del panel de administración
 META_BOLETOS = 30
 META_MONTO = 21600
 
@@ -27,12 +27,23 @@ def aplicar_diseno():
         --muted: #726D5F;
     }
 
-    html, body, [class*="css"] { font-family: 'Inter', sans-serif; color: var(--ink); }
-    .stApp { background-color: var(--paper); }
+    /* 1. BLINDAJE ANTI-MODO OSCURO (Forzar colores siempre) */
+    html, body, [class*="css"], .stApp { 
+        font-family: 'Inter', sans-serif; 
+        background-color: var(--paper) !important;
+        color: var(--ink) !important;
+    }
     .block-container { max-width: 760px; padding-top: 2.4rem; padding-bottom: 4rem; }
 
-    h1, h2, h3 { font-family: 'Source Serif 4', serif !important; color: var(--green) !important; font-weight: 600 !important; }
+    /* Forzar texto oscuro a nivel global para evitar que se ponga blanco en modo oscuro */
     p, span, label, li { color: var(--ink); }
+    h1, h2, h3 { font-family: 'Source Serif 4', serif !important; color: var(--green) !important; font-weight: 600 !important; }
+
+    /* 2. ELIMINAR CONTAMINACIÓN VISUAL (Logos, menú de Streamlit, footer) */
+    header, footer, #MainMenu, .stDeployButton {
+        display: none !important;
+        visibility: hidden !important;
+    }
 
     /* ---------- Hero / letterhead ---------- */
     .hero {
@@ -45,18 +56,18 @@ def aplicar_diseno():
     }
     .hero h1 { color: #F6F1E4 !important; font-size: 2.05rem !important; margin: 0 0 0.7rem !important; line-height: 1.18; }
     .hero .rule { width: 38px; height: 1px; background: var(--gold-soft); margin: 0 auto 0.7rem; opacity: 0.65; }
-    .hero .meta { font-family: 'IBM Plex Mono', monospace; color: #EDE7D6; font-size: 0.95rem; opacity: 0.92; }
+    .hero .meta { font-family: 'IBM Plex Mono', monospace; color: #EDE7D6 !important; font-size: 0.95rem; opacity: 0.92; }
 
     .teaser { text-align: center; color: var(--muted); font-size: 1.02rem; line-height: 1.6; margin: 0 0 1.8rem; }
     .teaser b { color: var(--ink); font-weight: 600; }
 
     /* ---------- Bio card ---------- */
     .bio-card {
-        background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--green);
+        background: var(--card) !important; border: 1px solid var(--line); border-left: 3px solid var(--green);
         padding: 1.6rem 1.8rem; border-radius: 3px; margin-bottom: 2.2rem;
     }
-    .bio-card p { line-height: 1.68; margin: 0; font-size: 1rem; }
-    .bio-card .firma { font-family: 'Source Serif 4', serif; font-style: italic; color: var(--green); font-size: 1.02rem; display: block; margin-top: 1rem; }
+    .bio-card p { line-height: 1.68; margin: 0; font-size: 1rem; color: var(--ink) !important; }
+    .bio-card .firma { font-family: 'Source Serif 4', serif; font-style: italic; color: var(--green) !important; font-size: 1.02rem; display: block; margin-top: 1rem; }
 
     /* ---------- Section headers ---------- */
     .section-label {
@@ -67,57 +78,80 @@ def aplicar_diseno():
 
     /* ---------- Prize cards ---------- */
     .prize-card { border-radius: 3px; padding: 1.5rem 1.4rem; height: 100%; }
-    .prize-card.tier-1 { background: linear-gradient(165deg, var(--green) 0%, var(--green-deep) 100%); color: #F6F1E4; }
-    .prize-card.tier-2 { background: #fff; border: 1px solid var(--line); }
+    .prize-card.tier-1 { background: linear-gradient(165deg, var(--green) 0%, var(--green-deep) 100%); }
+    .prize-card.tier-2 { background: #fff !important; border: 1px solid var(--line); }
+    
     .prize-card .rank { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; }
-    .prize-card.tier-1 .rank { color: var(--gold-soft); }
-    .prize-card.tier-2 .rank { color: var(--gold); }
+    
+    /* 3. CORRECCIÓN DE COLORIMETRÍA TARJETA 1 (Textos claros sobre fondo oscuro) */
+    .prize-card.tier-1 h4, .prize-card.tier-1 p, .prize-card.tier-1 span, .prize-card.tier-1 li { color: #F6F1E4 !important; }
+    .prize-card.tier-1 .rank, .prize-card.tier-1 .value { color: var(--gold-soft) !important; }
+    
+    /* Colorimetría Tarjeta 2 */
+    .prize-card.tier-2 h4 { color: var(--green) !important; }
+    .prize-card.tier-2 p, .prize-card.tier-2 span, .prize-card.tier-2 li { color: var(--ink) !important; }
+    .prize-card.tier-2 .rank, .prize-card.tier-2 .value { color: var(--gold) !important; }
+    
     .prize-card h4 { font-family: 'Source Serif 4', serif; font-size: 1.12rem; margin: 0.55rem 0 0.15rem; font-weight: 600; }
-    .prize-card.tier-1 h4 { color: #fff; }
-    .prize-card.tier-2 h4 { color: var(--green); }
     .prize-card .sub { font-size: 0.86rem; opacity: 0.85; display: block; margin-bottom: 0.5rem; }
     .prize-card ul { margin: 0.5rem 0; padding-left: 1.05rem; font-size: 0.92rem; line-height: 1.55; }
     .prize-card .value { font-family: 'IBM Plex Mono', monospace; font-weight: 600; margin-top: 0.65rem; display: block; font-size: 0.95rem; }
-    .prize-card.tier-1 .value { color: var(--gold-soft); }
-    .prize-card.tier-2 .value { color: var(--gold); }
 
-    /* ---------- Data tables (listas reescritas como tabla) ---------- */
+    /* ---------- Data tables ---------- */
     .data-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin: 0.3rem 0 0.6rem; }
     .data-table th {
         text-align: left; font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; letter-spacing: 0.08em;
         text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--line); padding: 0.5rem 0.6rem;
     }
-    .data-table td { padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--line); }
-    .data-table td.num { font-family: 'IBM Plex Mono', monospace; white-space: nowrap; }
+    .data-table td { padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--line); color: var(--ink) !important; }
+    .data-table td.num { font-family: 'IBM Plex Mono', monospace; white-space: nowrap; font-weight: 600; }
 
     /* ---------- Legal / mechanics ---------- */
     .legal-block { margin-bottom: 1.1rem; }
     .legal-block .lbl { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); display: block; margin-bottom: 0.3rem; }
-    .legal-block p { font-size: 0.94rem; line-height: 1.6; margin: 0; color: var(--ink); }
+    .legal-block p { font-size: 0.94rem; line-height: 1.6; margin: 0; color: var(--ink) !important; }
 
-    /* ---------- Buttons ---------- */
+    /* ---------- Buttons (Corrección del texto oscuro) ---------- */
     .stButton > button, [data-testid="stFormSubmitButton"] > button {
-        background: var(--green) !important; color: #F6F1E4 !important; border: none !important;
-        border-radius: 3px !important; font-family: 'Inter', sans-serif !important; font-weight: 600 !important;
-        letter-spacing: 0.01em; padding: 0.7rem 1.4rem !important; width: 100%; box-shadow: none !important;
+        background: var(--green) !important; border: none !important;
+        border-radius: 3px !important; width: 100%; box-shadow: none !important;
         transition: background 0.15s ease, transform 0.15s ease;
+        padding: 0.7rem 1.4rem !important;
+    }
+    /* El <p> interno del botón heredaba el color negro, aquí lo forzamos a blanco crema */
+    .stButton > button p, [data-testid="stFormSubmitButton"] > button p, 
+    .stButton > button div, [data-testid="stFormSubmitButton"] > button div {
+        color: #F6F1E4 !important; 
+        font-family: 'Inter', sans-serif !important; 
+        font-weight: 600 !important;
+        letter-spacing: 0.01em;
     }
     .stButton > button:hover, [data-testid="stFormSubmitButton"] > button:hover {
         background: var(--green-deep) !important; transform: translateY(-1px);
     }
 
-    /* ---------- Inputs ---------- */
-    .stTextInput input, .stNumberInput input { border-radius: 3px !important; border-color: var(--line) !important; }
+    /* ---------- Inputs (Para modo oscuro, forzamos fondo blanco y letras negras) ---------- */
+    .stTextInput label p, .stNumberInput label p, .stRadio label p, .stMultiSelect label p { color: var(--ink) !important; font-weight: 600; }
+    .stTextInput input, .stNumberInput input { 
+        border-radius: 3px !important; border-color: var(--line) !important; 
+        background-color: #FFFFFF !important; color: var(--ink) !important; 
+    }
     .stTextInput input:focus, .stNumberInput input:focus { border-color: var(--green) !important; box-shadow: 0 0 0 1px var(--green) !important; }
+    
+    /* Multiselect y Radio Buttons */
+    [data-baseweb="select"] { background-color: #FFFFFF !important; }
+    [data-baseweb="radio"] div { color: var(--ink) !important; }
 
     /* ---------- Expanders ---------- */
-    [data-testid="stExpander"] { border: 1px solid var(--line) !important; border-radius: 3px !important; background: #fff; margin-bottom: 0.6rem; }
+    [data-testid="stExpander"] { border: 1px solid var(--line) !important; border-radius: 3px !important; background: #FFFFFF !important; margin-bottom: 0.6rem; }
     [data-testid="stExpander"] summary { font-family: 'Source Serif 4', serif !important; color: var(--green) !important; font-weight: 600 !important; font-size: 1rem !important; }
+    [data-testid="stExpander"] summary p { color: var(--green) !important; font-weight: 600 !important; }
+    [data-testid="stExpander"] div[role="region"] p, [data-testid="stExpander"] div[role="region"] li { color: var(--ink) !important; }
 
     /* ---------- Metrics (admin) ---------- */
-    [data-testid="stMetric"] { background: #fff; border: 1px solid var(--line); border-radius: 3px; padding: 0.9rem 1rem 0.7rem; }
-    [data-testid="stMetricValue"] { font-family: 'IBM Plex Mono', monospace !important; color: var(--green) !important; }
-    [data-testid="stMetricLabel"] { font-family: 'Inter', sans-serif !important; color: var(--muted) !important; }
+    [data-testid="stMetric"] { background: #FFFFFF !important; border: 1px solid var(--line); border-radius: 3px; padding: 0.9rem 1rem 0.7rem; }
+    [data-testid="stMetricValue"] div { font-family: 'IBM Plex Mono', monospace !important; color: var(--green) !important; }
+    [data-testid="stMetricLabel"] p { font-family: 'Inter', sans-serif !important; color: var(--muted) !important; }
 
     hr { border-color: var(--line) !important; }
     </style>
@@ -132,14 +166,12 @@ def render_prize_table(rows):
     html += "</tbody></table>"
     st.markdown(html, unsafe_allow_html=True)
 
-
 def render_benefit_table(rows):
     html = "<table class='data-table'><thead><tr><th>Comercio</th><th>Beneficio</th></tr></thead><tbody>"
     for negocio, beneficio in rows:
         html += f"<tr><td class='num'>{negocio}</td><td>{beneficio}</td></tr>"
     html += "</tbody></table>"
     st.markdown(html, unsafe_allow_html=True)
-
 
 # --- 3. BASE DE DATOS (PostgreSQL) ---
 conn = psycopg2.connect(st.secrets["db_url"])
@@ -381,7 +413,6 @@ def vista_admin():
             monto_abono = st.number_input("Monto a abonar", min_value=0.0, step=50.0)
             if st.form_submit_button("Registrar"):
                 if boleto_a_pagar:
-                    # Corrección del bloque SQL
                     c.execute("SELECT pagado FROM boletos WHERE boleto=%s", (boleto_a_pagar,))
                     pagado_actual = c.fetchone()[0]
                     nuevo_pago = pagado_actual + monto_abono
