@@ -28,6 +28,7 @@ def aplicar_diseno():
     }
 
     /* 1. BLINDAJE ANTI-MODO OSCURO */
+<<<<<<< HEAD
     html, body, .stApp { 
         font-family: 'Inter', sans-serif; 
         background-color: var(--paper) !important;
@@ -49,6 +50,19 @@ def aplicar_diseno():
         line-height: 1.2 !important;
     }
 
+=======
+    html, body, [class*="css"], .stApp { 
+        font-family: 'Inter', sans-serif; 
+        background-color: var(--paper) !important;
+        color: var(--ink) !important;
+    }
+    .block-container { max-width: 760px; padding-top: 2.4rem; padding-bottom: 4rem; }
+
+    p, span, label, li { color: var(--ink); }
+    /* Se quitó el !important del color para no chocar con la tarjeta Hero */
+    h1, h2, h3 { font-family: 'Source Serif 4', serif !important; color: var(--green); font-weight: 600 !important; }
+
+>>>>>>> a608a38cc87539dd89cb31c98295a3e42026b5ca
     /* 2. CORRECCIÓN FLECHITA LATERAL: Ocultar basura visual, pero mantener flecha de menú */
     #MainMenu, footer, .stDeployButton {
         display: none !important;
@@ -215,7 +229,13 @@ def vista_publica():
     st.markdown("""
     <div class="hero">
         <div class="eyebrow">Sorteo UDLAP &nbsp;·&nbsp; 40.ª edición</div>
+<<<<<<< HEAD
         <div class="titulo-principal">Cuadragésimo Sorteo UDLAP</div>
+=======
+        <div style="font-family: 'Source Serif 4', serif; font-size: 2.3rem; font-weight: 700; color: #FDFBF7 !important; margin-bottom: 0.7rem; text-shadow: 0px 4px 10px rgba(0,0,0,0.25); line-height: 1.2;">
+            Cuadragésimo Sorteo UDLAP
+        </div>
+>>>>>>> a608a38cc87539dd89cb31c98295a3e42026b5ca
         <div class="rule"></div>
         <div class="meta">Boleto: $720 MXN &nbsp;·&nbsp; Sorteo: 21 de noviembre de 2026</div>
     </div>
@@ -485,3 +505,4 @@ if opcion == "Sorteo (Público)":
     vista_publica()
 else:
     vista_admin()
+
