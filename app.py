@@ -138,7 +138,7 @@ def vista_publica():
 
     # Exhibición de Autos (Imagen Premium con CSS)
     # OJO: Para que esto funcione en la nube, es mejor que subas la foto a internet y pegues aquí el link (URL)
-    url_imagen = "https://github.com/lalogalvandel/sorteo-udlap/blob/main/premios_sorteo.jpg.jpg" # <- Cambia este link por el de tu imagen
+    url_imagen = "https://i.postimg.cc/wB3rMjmF/premios-sorteo-jpg.jpg" # <- Cambia este link por el de tu imagen
     
     st.markdown(f'''
     <div style="text-align: center; margin-bottom: 30px;">
