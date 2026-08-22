@@ -408,11 +408,37 @@ def vista_admin():
         c2.metric("Boletos colocados", f"{boletos_vendidos} / {META_BOLETOS}")
         c3.metric("Faltante", f"${META_MONTO - total_recaudado:,.2f}")
 
-        st.write("")
+                st.write("")
+        
+        # 1. Automatización: Crear un link directo a WhatsApp pre-llenado
+        def crear_link_wa(row):
+            if pd.isna(row['whatsapp']) or row['whatsapp'] == '': return None
+            # Limpiar el número (quitar espacios o guiones)
+            numero_limpio = ''.join(filter(str.isdigit, str(row['whatsapp'])))
+            nombre_cliente = str(row['comprador']).split()[0] # Tomar solo el primer nombre
+            
+            # Mensaje automatizado
+            mensaje = f"¡Hola {nombre_cliente}! Vi que apartaste el boleto {row['boleto']} del Sorteo UDLAP. ¡Mil gracias por apoyarme con mi beca! Te escribo para pasarte los datos para el pago:"
+            # Formatear para URL
+            mensaje_url = mensaje.replace(" ", "%20")
+            
+            # Asumimos lada de México (+52)
+            return f"https://wa.me/52{numero_limpio}?text={mensaje_url}"
+
+        # Aplicar la función a la base de datos para generar los links
+        df['Link_WA'] = df.apply(crear_link_wa, axis=1)
+
+        # 2. Mostrar la tabla con la columna de WhatsApp y el link clickeable
         st.dataframe(
-            df[['talonario', 'boleto', 'estatus', 'comprador', 'pagado']].style.format({'pagado': '${:,.2f}'}),
+            df[['boleto', 'estatus', 'comprador', 'whatsapp', 'pagado', 'Link_WA']],
+            column_config={
+                "pagado": st.column_config.NumberColumn("Pagado", format="$%f"),
+                "Link_WA": st.column_config.LinkColumn("Contactar", display_text="Abrir Chat 💬")
+            },
+            hide_index=True,
             use_container_width=True
         )
+
 
         st.subheader("Registrar cobro")
         with st.form("actualizar_pago"):
