@@ -136,24 +136,15 @@ def vista_publica():
     </p>
     """, unsafe_allow_html=True)
 
-    # Exhibición de Autos (Cards)
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown('''
-        <div class="car-card">
-            <span style="font-size: 40px;">🏎️</span>
-            <h3>Porsche Macan</h3>
-            <p>Eléctrica, lujo absoluto y velocidad sin límites.</p>
-        </div>
-        ''', unsafe_allow_html=True)
-    with col2:
-        st.markdown('''
-        <div class="car-card">
-            <span style="font-size: 40px;">🚘</span>
-            <h3>BMW Z4 / Audi A5</h3>
-            <p>Vehículos premium y decenas de cheques millonarios.</p>
-        </div>
-        ''', unsafe_allow_html=True)
+    # Exhibición de Autos (Imagen Premium con CSS)
+    # OJO: Para que esto funcione en la nube, es mejor que subas la foto a internet y pegues aquí el link (URL)
+    url_imagen = "https://www.udlap.mx/sorteo/assets/img/logo-sorteo-udlap.png" # <- Cambia este link por el de tu imagen
+    
+    st.markdown(f'''
+    <div style="text-align: center; margin-bottom: 30px;">
+        <img src="{url_imagen}" style="width: 100%; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border-top: 3px solid #FF6600;">
+    </div>
+    ''', unsafe_allow_html=True)
 
     # Formulario
     st.markdown("### 👇 Asegura tu boleto ahora")
