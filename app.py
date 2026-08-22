@@ -177,7 +177,7 @@ def vista_publica():
 
 # --- 5. VISTA PRIVADA ---
 def vista_admin():
-    st.title("⚙️ Panel de Administración")
+    st.title("Panel  de Administración")
     password = st.text_input("Contraseña de acceso", type="password")
     
     if password == "udlap2026": 
@@ -191,7 +191,7 @@ def vista_admin():
         c2.metric("Boletos Colocados", f"{boletos_vendidos} / 30")
         c3.metric("Faltante", f"${21600 - total_recaudado:,.2f}")
         
-        st.dataframe(df[['talonario', 'boleto', 'estatus', 'comprador', 'pagado']], use_container_width=True)
+        st.dataframe(df[['talonario', 'boleto', 'estatus', 'comprador', 'pagado']], width='stretch')
         
         st.subheader("💰 Registrar Cobro")
         with st.form("actualizar_pago"):
