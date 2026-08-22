@@ -3,115 +3,154 @@ import pandas as pd
 import psycopg2
 
 # --- 1. CONFIGURACIÓN INICIAL ---
-st.set_page_config(page_title="Sorteo UDLAP | Gana una Residencia", layout="centered", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Sorteo UDLAP | Lalo Galván", layout="centered", initial_sidebar_state="collapsed")
+
+# Metas del panel de administración (mismos valores que el original: 30 boletos / $21,600)
+META_BOLETOS = 30
+META_MONTO = 21600
 
 # --- 2. INYECCIÓN DE CSS FRONTEND ---
 def aplicar_diseno():
-    css_magico = """
+    css = """
     <style>
-    /* Importar tipografías */
-    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&family=Montserrat:wght@400;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
 
-    /* Variables de Color y Tipografía Global */
-    html, body, [class*="css"] {
-        font-family: 'Montserrat', sans-serif;
-        color: #4A4A4A; /* Gris asfalto para legibilidad */
-    }
-    h1, h2, h3, .price {
-        font-family: 'Nunito', sans-serif !important;
-    }
-
-    /* Color Principal (Azul cielo) + Patrón de Tréboles (SVG embebido al 5% opacidad) */
-    .stApp {
-        background-color: #E3F2FD; 
-        background-image: url('data:image/svg+xml;utf8,<svg width="60" height="60" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><text y="50" font-size="25" fill="%23000000" opacity="0.05">🍀</text></svg>');
+    :root {
+        --ink: #262920;
+        --green: #1E3A2D;
+        --green-deep: #142A20;
+        --gold: #9C6428;
+        --gold-soft: #C99958;
+        --paper: #FBFAF6;
+        --card: #FFFFFF;
+        --line: #E4E0D3;
+        --muted: #726D5F;
     }
 
-    /* Color de Acción (Naranja Vibrante) para botones CTA */
-    .stButton > button {
-        background-color: #FF6600 !important;
-        color: #FFFFFF !important;
-        border-radius: 30px !important;
-        font-weight: 900 !important;
-        border: none !important;
-        font-family: 'Nunito', sans-serif !important;
-        font-size: 1.3rem !important;
-        padding: 10px 25px !important;
-        width: 100%;
-        box-shadow: 0 8px 20px rgba(255, 102, 0, 0.4);
-        transition: all 0.3s ease;
+    html, body, [class*="css"] { font-family: 'Inter', sans-serif; color: var(--ink); }
+    .stApp { background-color: var(--paper); }
+    .block-container { max-width: 760px; padding-top: 2.4rem; padding-bottom: 4rem; }
+
+    h1, h2, h3 { font-family: 'Source Serif 4', serif !important; color: var(--green) !important; font-weight: 600 !important; }
+    p, span, label, li { color: var(--ink); }
+
+    /* ---------- Hero / letterhead ---------- */
+    .hero {
+        background: linear-gradient(165deg, var(--green) 0%, var(--green-deep) 100%);
+        border-radius: 4px; padding: 2.5rem 2rem 2.1rem; text-align: center; margin-bottom: 1.6rem;
     }
-    .stButton > button:hover {
-        background-color: #E65C00 !important;
-        transform: translateY(-3px);
-        box-shadow: 0 12px 25px rgba(255, 102, 0, 0.5);
+    .hero .eyebrow {
+        font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.16em; font-size: 0.72rem;
+        color: var(--gold-soft); text-transform: uppercase; margin-bottom: 0.9rem;
+    }
+    .hero h1 { color: #F6F1E4 !important; font-size: 2.05rem !important; margin: 0 0 0.7rem !important; line-height: 1.18; }
+    .hero .rule { width: 38px; height: 1px; background: var(--gold-soft); margin: 0 auto 0.7rem; opacity: 0.65; }
+    .hero .meta { font-family: 'IBM Plex Mono', monospace; color: #EDE7D6; font-size: 0.95rem; opacity: 0.92; }
+
+    .teaser { text-align: center; color: var(--muted); font-size: 1.02rem; line-height: 1.6; margin: 0 0 1.8rem; }
+    .teaser b { color: var(--ink); font-weight: 600; }
+
+    /* ---------- Bio card ---------- */
+    .bio-card {
+        background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--green);
+        padding: 1.6rem 1.8rem; border-radius: 3px; margin-bottom: 2.2rem;
+    }
+    .bio-card p { line-height: 1.68; margin: 0; font-size: 1rem; }
+    .bio-card .firma { font-family: 'Source Serif 4', serif; font-style: italic; color: var(--green); font-size: 1.02rem; display: block; margin-top: 1rem; }
+
+    /* ---------- Section headers ---------- */
+    .section-label {
+        font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.14em; text-transform: uppercase;
+        font-size: 0.7rem; color: var(--muted); text-align: center; margin: 0 0 0.35rem;
+    }
+    .section-title { font-family: 'Source Serif 4', serif; text-align: center; color: var(--green); font-size: 1.5rem; margin: 0 0 1.5rem; font-weight: 600; }
+
+    /* ---------- Prize cards ---------- */
+    .prize-card { border-radius: 3px; padding: 1.5rem 1.4rem; height: 100%; }
+    .prize-card.tier-1 { background: linear-gradient(165deg, var(--green) 0%, var(--green-deep) 100%); color: #F6F1E4; }
+    .prize-card.tier-2 { background: #fff; border: 1px solid var(--line); }
+    .prize-card .rank { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; }
+    .prize-card.tier-1 .rank { color: var(--gold-soft); }
+    .prize-card.tier-2 .rank { color: var(--gold); }
+    .prize-card h4 { font-family: 'Source Serif 4', serif; font-size: 1.12rem; margin: 0.55rem 0 0.15rem; font-weight: 600; }
+    .prize-card.tier-1 h4 { color: #fff; }
+    .prize-card.tier-2 h4 { color: var(--green); }
+    .prize-card .sub { font-size: 0.86rem; opacity: 0.85; display: block; margin-bottom: 0.5rem; }
+    .prize-card ul { margin: 0.5rem 0; padding-left: 1.05rem; font-size: 0.92rem; line-height: 1.55; }
+    .prize-card .value { font-family: 'IBM Plex Mono', monospace; font-weight: 600; margin-top: 0.65rem; display: block; font-size: 0.95rem; }
+    .prize-card.tier-1 .value { color: var(--gold-soft); }
+    .prize-card.tier-2 .value { color: var(--gold); }
+
+    /* ---------- Data tables (listas reescritas como tabla) ---------- */
+    .data-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin: 0.3rem 0 0.6rem; }
+    .data-table th {
+        text-align: left; font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; letter-spacing: 0.08em;
+        text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--line); padding: 0.5rem 0.6rem;
+    }
+    .data-table td { padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--line); }
+    .data-table td.num { font-family: 'IBM Plex Mono', monospace; white-space: nowrap; }
+
+    /* ---------- Legal / mechanics ---------- */
+    .legal-block { margin-bottom: 1.1rem; }
+    .legal-block .lbl { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); display: block; margin-bottom: 0.3rem; }
+    .legal-block p { font-size: 0.94rem; line-height: 1.6; margin: 0; color: var(--ink); }
+
+    /* ---------- Buttons ---------- */
+    .stButton > button, [data-testid="stFormSubmitButton"] > button {
+        background: var(--green) !important; color: #F6F1E4 !important; border: none !important;
+        border-radius: 3px !important; font-family: 'Inter', sans-serif !important; font-weight: 600 !important;
+        letter-spacing: 0.01em; padding: 0.7rem 1.4rem !important; width: 100%; box-shadow: none !important;
+        transition: background 0.15s ease, transform 0.15s ease;
+    }
+    .stButton > button:hover, [data-testid="stFormSubmitButton"] > button:hover {
+        background: var(--green-deep) !important; transform: translateY(-1px);
     }
 
-    /* Tarjetas de Exhibición de Autos (Fondo Oscuro Neutro) */
-    .car-card {
-        background-color: #242424;
-        background-image: linear-gradient(145deg, #242424, #1a1a1a);
-        color: white;
-        padding: 20px;
-        border-radius: 20px;
-        text-align: center;
-        margin-bottom: 20px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        border-top: 3px solid #FF6600;
-    }
-    .car-card h3 {
-        color: #FFFFFF;
-        margin-bottom: 5px;
-        font-size: 1.5rem;
-    }
-    .car-card p {
-        color: #A0A0A0;
-        font-size: 0.9rem;
-    }
+    /* ---------- Inputs ---------- */
+    .stTextInput input, .stNumberInput input { border-radius: 3px !important; border-color: var(--line) !important; }
+    .stTextInput input:focus, .stNumberInput input:focus { border-color: var(--green) !important; box-shadow: 0 0 0 1px var(--green) !important; }
 
-    /* Colores Secundarios para detalles (Mascota) */
-    .highlight-green { color: #2E8B57; font-weight: bold; }
-    .highlight-blue { color: #4169E1; font-weight: bold; }
+    /* ---------- Expanders ---------- */
+    [data-testid="stExpander"] { border: 1px solid var(--line) !important; border-radius: 3px !important; background: #fff; margin-bottom: 0.6rem; }
+    [data-testid="stExpander"] summary { font-family: 'Source Serif 4', serif !important; color: var(--green) !important; font-weight: 600 !important; font-size: 1rem !important; }
 
-    /* Efecto Parallax suave de Billetes Cayendo */
-    @keyframes falling {
-        0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; }
-        10% { opacity: 0.6; }
-        90% { opacity: 0.6; }
-        100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
-    }
-    .billete {
-        position: fixed;
-        font-size: 28px;
-        z-index: 0;
-        animation: falling 7s linear infinite;
-        pointer-events: none;
-    }
-    .b1 { left: 15%; animation-duration: 8s; animation-delay: 0s; }
-    .b2 { left: 85%; animation-duration: 6s; animation-delay: 2s; }
-    .b3 { left: 50%; animation-duration: 9s; animation-delay: 4s; }
+    /* ---------- Metrics (admin) ---------- */
+    [data-testid="stMetric"] { background: #fff; border: 1px solid var(--line); border-radius: 3px; padding: 0.9rem 1rem 0.7rem; }
+    [data-testid="stMetricValue"] { font-family: 'IBM Plex Mono', monospace !important; color: var(--green) !important; }
+    [data-testid="stMetricLabel"] { font-family: 'Inter', sans-serif !important; color: var(--muted) !important; }
+
+    hr { border-color: var(--line) !important; }
     </style>
     """
-    st.markdown(css_magico, unsafe_allow_html=True)
-    # Inyectar billetes
-    st.markdown('''
-        <div class="billete b1">💸</div>
-        <div class="billete b2">💵</div>
-        <div class="billete b3">💸</div>
-    ''', unsafe_allow_html=True)
+    st.markdown(css, unsafe_allow_html=True)
+
+
+def render_prize_table(rows):
+    html = "<table class='data-table'><thead><tr><th>Lugar</th><th>Premio</th></tr></thead><tbody>"
+    for lugar, premio in rows:
+        html += f"<tr><td class='num'>{lugar}</td><td>{premio}</td></tr>"
+    html += "</tbody></table>"
+    st.markdown(html, unsafe_allow_html=True)
+
+
+def render_benefit_table(rows):
+    html = "<table class='data-table'><thead><tr><th>Comercio</th><th>Beneficio</th></tr></thead><tbody>"
+    for negocio, beneficio in rows:
+        html += f"<tr><td class='num'>{negocio}</td><td>{beneficio}</td></tr>"
+    html += "</tbody></table>"
+    st.markdown(html, unsafe_allow_html=True)
+
 
 # --- 3. BASE DE DATOS (PostgreSQL) ---
-# Nos conectamos usando la URL secreta
 conn = psycopg2.connect(st.secrets["db_url"])
-conn.autocommit = True # Esto hace que los cambios se guarden automáticamente
+conn.autocommit = True
 c = conn.cursor()
 
 def init_db():
-    # PostgreSQL usa SERIAL en lugar de AUTOINCREMENT
     c.execute('''CREATE TABLE IF NOT EXISTS boletos 
                  (id SERIAL PRIMARY KEY, talonario TEXT, boleto TEXT UNIQUE, 
                  estatus TEXT, comprador TEXT, whatsapp TEXT, metodo_pago TEXT, pagado REAL)''')
-    
+
     c.execute("SELECT COUNT(*) FROM boletos")
     if c.fetchone()[0] == 0:
         talonarios = {
@@ -121,129 +160,240 @@ def init_db():
         }
         for tal, boletos in talonarios.items():
             for bol in boletos:
-                # PostgreSQL usa %s en lugar de ?
                 c.execute("INSERT INTO boletos (talonario, boleto, estatus, comprador, whatsapp, metodo_pago, pagado) VALUES (%s, %s, 'Disponible', '', '', '', 0) ON CONFLICT DO NOTHING", (tal, bol))
 
 init_db()
 
 # --- 4. VISTA PÚBLICA (LANDING PAGE) ---
 def vista_publica():
-    aplicar_diseno()
-    
-    st.markdown('<h1 style="text-align: center; color: #1F4E78; font-size: 2.5rem; margin-bottom: 0;">Cuadragésimo Sorteo UDLAP</h1>', unsafe_allow_html=True)
-    st.markdown('<h2 style="text-align: center; color: #FF6600; font-size: 2rem;">Boleto: $720 MXN</h2>', unsafe_allow_html=True)
-    
     st.markdown("""
-    <p style="text-align: center; font-size: 1.1rem;">
-    Participa por una <b>Residencia de $34,000,000 MXN totalmente amueblada</b>.<br>
-    ¡El Sorteo es el 21 de Noviembre!
-    </p>
+    <div class="hero">
+        <div class="eyebrow">Sorteo UDLAP &nbsp;·&nbsp; 40.ª edición</div>
+        <h1>Cuadragésimo Sorteo UDLAP</h1>
+        <div class="rule"></div>
+        <div class="meta">Boleto: $720 MXN &nbsp;·&nbsp; Sorteo: 21 de noviembre de 2026</div>
+    </div>
     """, unsafe_allow_html=True)
 
-    # Tarjeta de mensaje personal
     st.markdown("""
-    <div style="background-color: #ffffff; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px; border-left: 6px solid #FF6600;">
-        <h3 style="color: #1F4E78; margin-top: 0; font-family: 'Nunito', sans-serif;">¡Hola! Soy Lalo Galván 👋</h3>
-        <p style="font-size: 1.1rem; color: #4A4A4A; line-height: 1.6;">
-            Actualmente estoy en mi tercer semestre estudiando <b>Actuaría en la UDLAP</b>. La venta de estos boletos es el requisito principal para mantener mi apoyo educativo. <br><br>
-            Al apartar tu boleto, no solo participas por la casa o el Porsche, sino que me das un empujón enorme para continuar con mi carrera. ¡De verdad aprecio muchísimo que me eches la mano!
+    <p class="teaser">Participa por una <b>residencia valuada en $34,000,000 MXN</b>, totalmente amueblada,
+    además de autos y cheques en efectivo.</p>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="bio-card">
+        <p>
+            Soy Lalo Galván, estudiante de tercer semestre de Actuaría en la UDLAP. La venta de estos boletos
+            es el requisito principal para conservar mi apoyo educativo. Al apartar el tuyo no solo participas
+            por la residencia, los autos y los cheques del sorteo: me ayudas de forma directa a continuar con
+            mi carrera.
+            <span class="firma">Te agradezco de verdad el apoyo. — Lalo</span>
         </p>
     </div>
     """, unsafe_allow_html=True)
 
-    # Exhibición de Autos (Imagen Premium con CSS)
-    # OJO: Para que esto funcione en la nube, es mejor que subas la foto a internet y pegues aquí el link (URL)
-    url_imagen = "https://i.postimg.cc/wB3rMjmF/premios-sorteo-jpg.jpg" # <- Cambia este link por el de tu imagen
-    
-    st.markdown(f'''
-    <div style="text-align: center; margin-bottom: 30px;">
-        <img src="{url_imagen}" style="width: 100%; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border-top: 3px solid #FF6600;">
+    url_imagen = "https://i.postimg.cc/wB3rMjmF/premios-sorteo-jpg.jpg"
+    st.markdown(f"""
+    <div style="text-align:center; margin-bottom: 2.2rem;">
+        <img src="{url_imagen}" style="width:100%; border-radius:4px; box-shadow:0 10px 26px rgba(20,42,32,0.18); border:1px solid var(--line);">
     </div>
-    ''', unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
-    # Formulario
-    st.markdown("### 👇 Asegura tu boleto ahora")
+    # --- SECCIÓN DE PREMIOS ---
+    st.markdown('<div class="section-label">Premios principales</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">¿Qué te puedes ganar?</div>', unsafe_allow_html=True)
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown('''
+        <div class="prize-card tier-1">
+            <span class="rank">1.er premio</span>
+            <h4>Residencia en Lomas de Angelópolis</h4>
+            <span class="sub">Completamente amueblada y decorada.</span>
+            <ul>
+                <li>Audi Q2</li>
+                <li>Audi A1</li>
+                <li>Cheque por $200,000 MXN</li>
+            </ul>
+            <span class="value">Valor: $20.8 millones</span>
+        </div>
+        ''', unsafe_allow_html=True)
+
+    with col2:
+        st.markdown('''
+        <div class="prize-card tier-2">
+            <span class="rank">2.º premio</span>
+            <h4>Residencia en Lomas de Angelópolis</h4>
+            <span class="sub">Completamente amueblada y decorada.</span>
+            <ul>
+                <li>Audi A1</li>
+                <li>Cheque por $150,000 MXN</li>
+            </ul>
+            <span class="value">Valor: $12.8 millones</span>
+        </div>
+        ''', unsafe_allow_html=True)
+
+    st.write("")
+
+    with st.expander("Ver lista completa de los 250 premios"):
+        render_prize_table([
+            ("3.º", "$4,000,000 MXN en cheque"),
+            ("4.º", "$3,000,000 MXN en cheque"),
+            ("5.º", "Porsche Macan Eléctrica"),
+            ("6.º", "BMW Z4"),
+            ("7.º", "Audi A5"),
+            ("8.º", "BMW Serie 2"),
+            ("9.º", "Cupra Terramar"),
+            ("10.º", "Mini Aceman"),
+            ("11.º", "Buick Envista Avenir"),
+            ("12.º – 13.º", "VW Jetta"),
+            ("14.º – 18.º", "VW Taigun"),
+            ("19.º – 40.º", "VW Polo"),
+            ("41.º – 47.º", "$150,000 MXN"),
+            ("48.º – 57.º", "$100,000 MXN"),
+            ("58.º – 67.º", "$50,000 MXN"),
+            ("68.º – 77.º", "$20,000 MXN"),
+            ("78.º – 250.º", "$10,000 MXN"),
+        ])
+
+    with st.expander("Promociones exclusivas con tu boleto"):
+        st.caption("Tu boleto físico da acceso inmediato a estos beneficios en Puebla.")
+        render_benefit_table([
+            ("Berry Munch", "Un topping extra gratis."),
+            ("Club Deportivo de Élite", "Inscripción sin costo, 20% de descuento el primer mes, fisioterapia y más."),
+            ("Cosmetología Integral", "20% de descuento en faciales o masajes, 15% en depilación y en lipo sin bisturí (paquetes)."),
+            ("Isabella Helados Artesanales", "Medio litro de nieve de limón gratis al comprar tu boleto en sucursal."),
+            ("La Momochina", "20% de descuento en consumo, o 2 tacos y agua de 500 ml gratis si lo compras ahí."),
+            ("Los Culichis Aguachiles", "Porción extra de proteína en ceviches y aguachiles; envío gratis en paquetes."),
+            ("Los Pinchos Zavaleta", "2x1 en pinchos tradicionales."),
+            ("Madison", "15% de descuento en tu cuenta total."),
+            ("Men's Fashions", "15% de descuento en productos de línea, más 10% adicional en prendas con menos del 50% de descuento."),
+            ("Papa John's", "20% de descuento sobre el precio de menú en todas las sucursales."),
+            ("Picosweet", "Pikopapas o un vaso de snacks botanero totalmente gratis."),
+            ("Volovanes Jaro 8", "En la compra de uno o más volovanes, te llevas uno gratis."),
+        ])
+
+    with st.expander("Mecánica y legales del sorteo"):
+        st.markdown("""
+        <div class="legal-block">
+            <span class="lbl">Mecánica</span>
+            <p>Se realizará con esferas por formación de números. Se usarán 5 ánforas: cuatro con esferas del 0
+            al 9, y la quinta con esferas del 0 al 31 (emisión de 320,000 boletos). La lectura es de izquierda
+            a derecha. Los premios se otorgan de mayor a menor valor (1 al 250). Si un premio cae en un boleto
+            no vendido, se re-sorteará hasta tener un ganador válido de acuerdo con el Reglamento de la Ley de
+            Juegos y Sorteos.</p>
+        </div>
+        <div class="legal-block">
+            <span class="lbl">Emisión y precio</span>
+            <p>320,000 boletos (312,000 físicos y 8,000 electrónicos). Precio por boleto: $720 MXN. Valor total
+            de la emisión: $230,400,000.00 MXN.</p>
+        </div>
+        <div class="legal-block">
+            <span class="lbl">Premios entregados</span>
+            <p>500 premios en total: 250 a compradores y 250 a colaboradores.</p>
+        </div>
+        <div class="legal-block">
+            <span class="lbl">Fecha y sede</span>
+            <p>21 de noviembre de 2026, 12:00 horas, Auditorio Guillermo y Sofía Jenkins de la UDLAP.</p>
+        </div>
+        <div class="legal-block">
+            <span class="lbl">Permisos SEGOB</span>
+            <p>20260049PS09 y 20260048PS07. Vigencia del 12 de marzo al 21 de noviembre de 2026.</p>
+        </div>
+        <div class="legal-block">
+            <span class="lbl">Publicación de resultados</span>
+            <p>23 de noviembre de 2026, en El Universal y El Sol de Puebla.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.write("")
+
+    # --- FORMULARIO DE COMPRA ---
+    st.markdown("### Aparta tu boleto")
     df_disponibles = pd.read_sql("SELECT boleto FROM boletos WHERE estatus='Disponible'", conn)
     boletos_lista = df_disponibles['boleto'].tolist()
-    
+
     if not boletos_lista:
-        st.error("¡Se han agotado todos los boletos! Muchas gracias por tu apoyo.")
+        st.info("Por el momento no hay boletos disponibles. Gracias por tu interés y tu apoyo.")
         return
 
     with st.form("registro_boleto"):
-        nombre = st.text_input("Tu Nombre Completo")
-        whatsapp = st.text_input("Tu WhatsApp")
-        boletos_select = st.multiselect("¿Qué números te dan más suerte?", boletos_lista)
-        metodo = st.radio("Método de pago preferido", 
+        nombre = st.text_input("Tu nombre completo *")
+        whatsapp = st.text_input("Tu WhatsApp *", placeholder="10 dígitos")
+        boletos_select = st.multiselect("¿Qué números te dan más suerte? *", boletos_lista)
+        st.caption("Cada número tiene un costo de $720 MXN. Puedes seleccionar uno o varios.")
+        metodo = st.radio("Método de pago preferido *",
                           ["Pago Único (Transferencia $720)", "Plan 3 Quincenas (Enganche $120 + 2 de $300)"])
-        
-        submit = st.form_submit_button("¡COMPRAR MI BOLETO!")
-        
+
+        submit = st.form_submit_button("Apartar mi boleto")
+
         if submit:
             if nombre and whatsapp and boletos_select:
                 for b in boletos_select:
                     c.execute("UPDATE boletos SET estatus='Apartado', comprador=%s, whatsapp=%s, metodo_pago=%s WHERE boleto=%s", (nombre, whatsapp, metodo, b))
                 conn.commit()
-                st.success(f"¡Éxito {nombre}! Tus números están apartados. Te enviaré un WhatsApp en unos minutos.")
-                st.balloons()
+                st.success(f"Gracias, {nombre}. Tus números quedaron apartados; te escribiré por WhatsApp en unos minutos para confirmar el pago.")
             else:
-                st.warning("Por favor, llena tus datos para apartar tus boletos.")
+                st.warning("Completa tu nombre, tu WhatsApp y al menos un número para continuar.")
 
-# --- 5. VISTA PRIVADA ---
+# --- 5. VISTA PRIVADA (ADMINISTRADOR) ---
 def vista_admin():
-    st.title("Panel de Administración")
-    
-    # Iniciar la variable de estado si no existe
+    st.markdown('<div class="section-label">Panel interno</div>', unsafe_allow_html=True)
+    st.title("Administración")
+
     if 'autenticado' not in st.session_state:
         st.session_state['autenticado'] = False
 
-    # Si no está autenticado, mostrar la caja de contraseña
     if not st.session_state['autenticado']:
         password = st.text_input("Contraseña de acceso", type="password")
-        if st.button("Entrar"):
-            # AQUÍ VALIDAMOS CON st.secrets COMO ACORDAMOS
-            if password == st.secrets["admin_password"]: 
+        if st.button("Ingresar"):
+            if password == st.secrets["admin_password"]:
                 st.session_state['autenticado'] = True
-                st.rerun() # Recargar la página para que desaparezca la caja de contraseña
+                st.rerun()
             else:
                 st.error("Contraseña incorrecta.")
-    
-    # Si ya está autenticado, mostrar el panel
+
     if st.session_state['autenticado']:
         st.success("Acceso concedido.")
-        
-        # Botón para cerrar sesión (Opcional, pero recomendado)
-        if st.button("Cerrar Sesión"):
+
+        if st.button("Cerrar sesión"):
             st.session_state['autenticado'] = False
             st.rerun()
 
         df = pd.read_sql("SELECT * FROM boletos", conn)
         total_recaudado = df['pagado'].sum()
         boletos_vendidos = len(df[df['estatus'].isin(['Apartado', 'Pagado Total'])])
-        
+
         c1, c2, c3 = st.columns(3)
-        c1.metric("Dinero Recaudado", f"${total_recaudado:,.2f}")
-        c2.metric("Boletos Colocados", f"{boletos_vendidos} / 30")
-        c3.metric("Faltante", f"${21600 - total_recaudado:,.2f}")
-        
-        st.dataframe(df[['talonario', 'boleto', 'estatus', 'comprador', 'pagado']], use_container_width=True)
-        
-        st.subheader("Registrar Cobro")
+        c1.metric("Dinero recaudado", f"${total_recaudado:,.2f}")
+        c2.metric("Boletos colocados", f"{boletos_vendidos} / {META_BOLETOS}")
+        c3.metric("Faltante", f"${META_MONTO - total_recaudado:,.2f}")
+
+        st.write("")
+        st.dataframe(
+            df[['talonario', 'boleto', 'estatus', 'comprador', 'pagado']].style.format({'pagado': '${:,.2f}'}),
+            use_container_width=True
+        )
+
+        st.subheader("Registrar cobro")
         with st.form("actualizar_pago"):
             boleto_a_pagar = st.selectbox("Selecciona el boleto", df[df['estatus'] != 'Disponible']['boleto'].tolist())
             monto_abono = st.number_input("Monto a abonar", min_value=0.0, step=50.0)
             if st.form_submit_button("Registrar"):
                 if boleto_a_pagar:
-                    pagado_actual = c.execute("SELECT pagado FROM boletos WHERE boleto=%s", (boleto_a_pagar,))
+                    # Corrección del bloque SQL
+                    c.execute("SELECT pagado FROM boletos WHERE boleto=%s", (boleto_a_pagar,))
                     pagado_actual = c.fetchone()[0]
                     nuevo_pago = pagado_actual + monto_abono
                     nuevo_estatus = "Pagado Total" if nuevo_pago >= 720 else "Apartado"
-                    c.execute("UPDATE boletos SET pagado=?, estatus=? WHERE boleto=?", (nuevo_pago, nuevo_estatus, boleto_a_pagar))
+
+                    c.execute("UPDATE boletos SET pagado=%s, estatus=%s WHERE boleto=%s", (nuevo_pago, nuevo_estatus, boleto_a_pagar))
                     conn.commit()
-                    st.success("Cobro registrado.")
+                    st.success("Cobro registrado correctamente.")
                     st.rerun()
 
 # --- 6. NAVEGADOR ---
+aplicar_diseno()
 opcion = st.sidebar.radio("Menú", ["Sorteo (Público)", "Admin (Privado)"])
 if opcion == "Sorteo (Público)":
     vista_publica()
