@@ -127,7 +127,7 @@ def vista_publica():
     aplicar_diseno()
     
     # Hero Section
-    st.markdown('<h1 style="text-align: center; color: #1F4E78; font-size: 2.5rem; margin-bottom: 0;">🍀 Gran Sorteo UDLAP</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 style="text-align: center; color: #1F4E78; font-size: 2.5rem; margin-bottom: 0;">Cuadragésimo Sorteo UDLAP</h1>', unsafe_allow_html=True)
     st.markdown('<h2 style="text-align: center; color: #FF6600; font-size: 2rem;">Boleto: $720 MXN</h2>', unsafe_allow_html=True)
     st.markdown("""
     <p style="text-align: center; font-size: 1.1rem;">
