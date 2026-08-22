@@ -126,14 +126,25 @@ init_db()
 def vista_publica():
     aplicar_diseno()
     
-    # Hero Section
     st.markdown('<h1 style="text-align: center; color: #1F4E78; font-size: 2.5rem; margin-bottom: 0;">Cuadragésimo Sorteo UDLAP</h1>', unsafe_allow_html=True)
     st.markdown('<h2 style="text-align: center; color: #FF6600; font-size: 2rem;">Boleto: $720 MXN</h2>', unsafe_allow_html=True)
+    
     st.markdown("""
     <p style="text-align: center; font-size: 1.1rem;">
     Participa por una <b>Residencia de $34,000,000 MXN totalmente amueblada</b>.<br>
-    Al asegurar tu lugar, me apoyas directamente a mantener mi beca para continuar mi carrera. ¡El Sorteo es el 21 de Noviembre!
+    ¡El Sorteo es el 21 de Noviembre!
     </p>
+    """, unsafe_allow_html=True)
+
+    # Tarjeta de mensaje personal
+    st.markdown("""
+    <div style="background-color: #ffffff; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px; border-left: 6px solid #FF6600;">
+        <h3 style="color: #1F4E78; margin-top: 0; font-family: 'Nunito', sans-serif;">¡Hola! Soy Lalo Galván 👋</h3>
+        <p style="font-size: 1.1rem; color: #4A4A4A; line-height: 1.6;">
+            Actualmente estoy en mi tercer semestre estudiando <b>Actuaría en la UDLAP</b>. La venta de estos boletos es el requisito principal para mantener mi apoyo educativo. <br><br>
+            Al apartar tu boleto, no solo participas por la casa o el Porsche, sino que me das un empujón enorme para continuar con mi carrera. ¡De verdad aprecio muchísimo que me eches la mano!
+        </p>
+    </div>
     """, unsafe_allow_html=True)
 
     # Exhibición de Autos (Imagen Premium con CSS)
@@ -177,7 +188,7 @@ def vista_publica():
 
 # --- 5. VISTA PRIVADA ---
 def vista_admin():
-    st.title("⚙️ Panel de Administración")
+    st.title("Panel de Administración")
     
     # Iniciar la variable de estado si no existe
     if 'autenticado' not in st.session_state:
@@ -214,7 +225,7 @@ def vista_admin():
         
         st.dataframe(df[['talonario', 'boleto', 'estatus', 'comprador', 'pagado']], use_container_width=True)
         
-        st.subheader("💰 Registrar Cobro")
+        st.subheader("Registrar Cobro")
         with st.form("actualizar_pago"):
             boleto_a_pagar = st.selectbox("Selecciona el boleto", df[df['estatus'] != 'Disponible']['boleto'].tolist())
             monto_abono = st.number_input("Monto a abonar", min_value=0.0, step=50.0)
