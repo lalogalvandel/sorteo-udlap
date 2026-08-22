@@ -180,7 +180,7 @@ def vista_admin():
     st.title("Panel  de Administración")
     password = st.text_input("Contraseña de acceso", type="password")
     
-    if password == "udlap2026": 
+    if password == st.secrets["admin_password"]:
         st.success("Acceso concedido.")
         df = pd.read_sql("SELECT * FROM boletos", conn)
         total_recaudado = df['pagado'].sum()
