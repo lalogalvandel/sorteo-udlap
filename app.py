@@ -408,7 +408,7 @@ def vista_admin():
         c2.metric("Boletos colocados", f"{boletos_vendidos} / {META_BOLETOS}")
         c3.metric("Faltante", f"${META_MONTO - total_recaudado:,.2f}")
 
-        st.write("")
+                st.write("")
         
         # 1. Automatización: Crear un link directo a WhatsApp pre-llenado
         def crear_link_wa(row):
@@ -438,6 +438,7 @@ def vista_admin():
             hide_index=True,
             use_container_width=True
         )
+
 
 
         st.subheader("Registrar cobro")
