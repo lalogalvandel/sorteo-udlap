@@ -273,11 +273,10 @@ def vista_publica():
     st.markdown("""
     <div class="bio-card">
         <p>
-            ¡Hola! Soy Lalo Galván, estudiante de tercer semestre de Actuaría en la UDLAP. La venta de estos boletos
-            es el requisito principal para conservar mi apoyo educativo. Al apartar el tuyo no solo participas
-            por la residencia, los autos y los cheques del sorteo: me ayudas de forma directa a continuar con
-            mi carrera.
-            <span class="firma">Te agradezco de verdad el apoyo. — Lalo</span>
+            ¡Hola! Qué gusto saludarte, soy Lalo.<br><br>
+            Ahorita estoy echándole todas las ganas a mi tercer semestre de Actuaría en la UDLAP. Vender estos boletos es clave para mí porque es lo que me ayuda a mantener mi beca y seguir estudiando.<br><br>
+            Al apartar tu número te llevas la chance de ganar la casa, un buen coche o un cheque millonario, y de paso, me das un empujón gigante para terminar mi carrera. 
+            <span class="firma">¡De corazón, mil gracias por echarme la mano! — Lalo 🫶</span>
         </p>
     </div>
     """, unsafe_allow_html=True)
