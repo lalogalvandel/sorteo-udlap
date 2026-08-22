@@ -205,11 +205,14 @@ def vista_publica():
     st.markdown("""
     <div class="hero">
         <div class="eyebrow">Sorteo UDLAP &nbsp;·&nbsp; 40.ª edición</div>
-        <h1 style="color: #E8D8B0 !important; text-shadow: 0px 2px 4px rgba(0,0,0,0.3);">Cuadragésimo Sorteo UDLAP</h1>
+        <div style="font-family: 'Source Serif 4', serif; font-size: 2.3rem; font-weight: 700; color: #FDFBF7 !important; margin-bottom: 0.7rem; text-shadow: 0px 4px 10px rgba(0,0,0,0.25); line-height: 1.2;">
+            Cuadragésimo Sorteo UDLAP
+        </div>
         <div class="rule"></div>
         <div class="meta">Boleto: $720 MXN &nbsp;·&nbsp; Sorteo: 21 de noviembre de 2026</div>
     </div>
     """, unsafe_allow_html=True)
+
 
 
     st.markdown("""
