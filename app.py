@@ -205,7 +205,7 @@ def vista_publica():
     st.markdown("""
     <div class="hero">
         <div class="eyebrow">Sorteo UDLAP &nbsp;·&nbsp; 40.ª edición</div>
-        <h1 style="color: #FDFBF7 !important; text-shadow: 0px 2px 4px rgba(0,0,0,0.3);">Cuadragésimo Sorteo UDLAP</h1>
+        <h1 style="color: #E8D8B0 !important; text-shadow: 0px 2px 4px rgba(0,0,0,0.3);">Cuadragésimo Sorteo UDLAP</h1>
         <div class="rule"></div>
         <div class="meta">Boleto: $720 MXN &nbsp;·&nbsp; Sorteo: 21 de noviembre de 2026</div>
     </div>
