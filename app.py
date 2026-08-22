@@ -192,7 +192,7 @@ def vista_publica():
     </div>
     """, unsafe_allow_html=True)
 
-    url_imagen = "https://i.postimg.cc/wB3rMjmF/premios-sorteo-jpg.jpg"
+    url_imagen = "https://i.postimg.cc/2jKnNdd4/premios-sorteo-jpg.png"
     st.markdown(f"""
     <div style="text-align:center; margin-bottom: 2.2rem;">
         <img src="{url_imagen}" style="width:100%; border-radius:4px; box-shadow:0 10px 26px rgba(20,42,32,0.18); border:1px solid var(--line);">
