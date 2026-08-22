@@ -410,20 +410,33 @@ def vista_admin():
 
         st.write("")
         
-        # 1. Automatización: Crear un link directo a WhatsApp pre-llenado
+                # 1. Automatización: Crear un link directo a WhatsApp pre-llenado
         def crear_link_wa(row):
+            import urllib.parse # Necesario para procesar emojis y saltos de línea
+            
             if pd.isna(row['whatsapp']) or row['whatsapp'] == '': return None
             # Limpiar el número (quitar espacios o guiones)
             numero_limpio = ''.join(filter(str.isdigit, str(row['whatsapp'])))
             nombre_cliente = str(row['comprador']).split()[0] # Tomar solo el primer nombre
             
-            # Mensaje automatizado
-            mensaje = f"¡Hola {nombre_cliente}! Vi que apartaste el boleto {row['boleto']} del Sorteo UDLAP. ¡Mil gracias por apoyarme con mi beca! Te escribo para pasarte los datos para el pago:"
-            # Formatear para URL
-            mensaje_url = mensaje.replace(" ", "%20")
+            # Mensaje automatizado con formato para WhatsApp (usando * para negritas)
+            mensaje = f"""¡Hola {nombre_cliente}! Vi que apartaste el boleto {row['boleto']} del Sorteo UDLAP. ¡Mil gracias por apoyarme 😁🫶🏻! 
+
+Te escribo para pasarte los datos para el pago:
+
+*Moneda:* Peso Mexicano (MXN)
+*Beneficiario:* Eduardo Galván Del Rio
+*CLABE:* 646990404098884683
+*Banco:* STP (Calle Varsovia 36, Piso 6, CDMX)
+*Concepto:* Boleto {row['boleto']}
+
+Me mandas el comprobante por aquí en cuanto lo tengas para registrarlo en mi sistema. ¡Gracias!"""
             
-            # Asumimos lada de México (+52)
+            # Codificar el texto para URL
+            mensaje_url = urllib.parse.quote(mensaje)
+            
             return f"https://wa.me/52{numero_limpio}?text={mensaje_url}"
+
 
         # Aplicar la función a la base de datos para generar los links
         df['Link_WA'] = df.apply(crear_link_wa, axis=1)
