@@ -141,7 +141,7 @@ def aplicar_diseno():
     .prize-card .value { font-family: 'IBM Plex Mono', monospace; font-weight: 600; margin-top: 0.8rem; display: block; font-size: 1rem; }
 
     /* ---------- Data tables ---------- */
-    .data-table { width: 100%; border-collapse: collapse; font-size: 0.95rem; margin: 0.3rem 0 0.6rem; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin: 0.3rem 0 0.6rem; table-layout: fixed; }
     .data-table th {
         text-align: left; 
         font-family: 'IBM Plex Mono', monospace; 
@@ -152,8 +152,20 @@ def aplicar_diseno():
         border-bottom: 1px solid var(--line); 
         padding: 0.6rem;
     }
-    .data-table td { padding: 0.6rem; border-bottom: 1px solid var(--line); color: var(--ink) !important; }
-    .data-table td.num { font-family: 'IBM Plex Mono', monospace; white-space: nowrap; font-weight: 600; color: var(--green) !important; }
+    .data-table th:first-child { width: 40%; }
+    .data-table th:last-child { width: 60%; }
+    .data-table td { 
+        padding: 0.6rem; 
+        border-bottom: 1px solid var(--line); 
+        color: var(--ink) !important; 
+        vertical-align: top; 
+        word-wrap: break-word;
+    }
+    .data-table td.num { 
+        font-family: 'IBM Plex Mono', monospace; 
+        font-weight: 600; 
+        color: var(--green) !important; 
+    }
 
     /* ---------- Legal / mechanics ---------- */
     .legal-block { margin-bottom: 1.2rem; }
