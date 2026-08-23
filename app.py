@@ -346,8 +346,9 @@ def vista_publica():
         ])
 
     with st.expander("Promociones exclusivas con tu boleto"):
-        st.caption("Tu boleto físico da acceso inmediato a estos beneficios en Puebla.")
+        st.caption("Tu boleto físico da acceso inmediato a estos beneficios en Puebla, además de una asesoría exclusiva.")
         render_benefit_table([
+            ("🌟 Motor GaLa (Bono VIP)", "Análisis cuantitativo de portafolio de inversión y simulación de riesgo utilizando mi plataforma financiera personal."),
             ("Berry Munch", "Un topping extra gratis."),
             ("Club Deportivo de Élite", "Inscripción sin costo, 20% de descuento el primer mes, fisioterapia y más."),
             ("Cosmetología Integral", "20% de descuento en faciales o masajes, 15% en depilación y en lipo sin bisturí (paquetes)."),
@@ -401,8 +402,9 @@ def vista_publica():
     st.markdown('<div class="section-label">Asegura tus números</div>', unsafe_allow_html=True)
     st.markdown('<div class="section-title">Aparta tu boleto</div>', unsafe_allow_html=True)
     
-    df_disponibles = pd.read_sql("SELECT boleto FROM boletos WHERE estatus='Disponible'", conn)
-    boletos_lista = df_disponibles['boleto'].tolist()
+    # SOLUCIÓN AL WARNING: Usar directamente psycopg2 en lugar de pd.read_sql
+    c.execute("SELECT boleto FROM boletos WHERE estatus='Disponible'")
+    boletos_lista = [row[0] for row in c.fetchall()]
 
     if not boletos_lista:
         st.info("Por el momento no hay boletos disponibles. Gracias por tu interés y tu apoyo.")
@@ -420,10 +422,37 @@ def vista_publica():
 
         if submit:
             if nombre and whatsapp and boletos_select:
+                import urllib.parse
+                
                 for b in boletos_select:
                     c.execute("UPDATE boletos SET estatus='Apartado', comprador=%s, whatsapp=%s, metodo_pago=%s WHERE boleto=%s", (nombre, whatsapp, metodo, b))
                 conn.commit()
-                st.success(f"Gracias, {nombre}. Tus números quedaron apartados; te escribiré por WhatsApp en unos minutos para confirmar el pago.")
+                
+                # --- MAGIA DE REDIRECCIÓN A WHATSAPP ---
+                numero_lalo = "522212325875" # PON TU NÚMERO DE CELULAR AQUÍ
+                
+                # LÓGICA INTELIGENTE: Singular vs Plural
+                if len(boletos_select) == 1:
+                    texto_boletos = f"el boleto {boletos_select[0]}"
+                else:
+                    boletos_str = ", ".join(boletos_select)
+                    texto_boletos = f"los boletos {boletos_str}"
+                    
+                mensaje_cliente = f"¡Hola Lalo! 👋 Acabo de apartar {texto_boletos} en tu página del Sorteo UDLAP. ¡Pásame tus datos para hacerte la transferencia!"
+                link_wa_cliente = f"https://wa.me/{numero_lalo}?text={urllib.parse.quote(mensaje_cliente)}"
+                
+                st.success(f"¡Excelente, {nombre}! Tus números quedaron apartados en la base de datos.")
+                
+                st.markdown(f"""
+                <div style="text-align: center; margin-top: 20px; margin-bottom: 10px;">
+                    <p style="font-size: 1.1rem; color: var(--green); font-weight: bold;">Falta un último paso para asegurar tu lugar:</p>
+                    <a href="{link_wa_cliente}" target="_blank" style="background-color: #25D366; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 1.1rem; display: inline-block; box-shadow: 0 4px 10px rgba(37, 211, 102, 0.3); font-family: 'Inter', sans-serif;">
+                        📲 Envíame un WhatsApp para confirmar
+                    </a>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                st.balloons()
             else:
                 st.warning("Completa tu nombre, tu WhatsApp y al menos un número para continuar.")
 
@@ -451,7 +480,10 @@ def vista_admin():
             st.session_state['autenticado'] = False
             st.rerun()
 
-        df = pd.read_sql("SELECT * FROM boletos", conn)
+        # SOLUCIÓN AL WARNING EN ADMIN
+        c.execute("SELECT * FROM boletos")
+        columnas = [desc[0] for desc in c.description]
+        df = pd.DataFrame(c.fetchall(), columns=columnas)
         
         # --- CÁLCULOS FINANCIEROS ---
         total_recaudado = df['pagado'].sum()
@@ -522,7 +554,7 @@ Me mandas el comprobante por aquí en cuanto lo tengas para registrarlo en mi si
                 "Link_WA": st.column_config.LinkColumn("Contactar", display_text="Abrir Chat 💬")
             },
             hide_index=True,
-            use_container_width=True
+            width='stretch'
         )
 
         # --- ZONA DE COBROS ---
