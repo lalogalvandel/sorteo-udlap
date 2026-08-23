@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import psycopg2
 import urllib.parse
-
+import datetime
 # --- 1. CONFIGURACIÓN INICIAL ---
 st.set_page_config(page_title="Sorteo UDLAP | Lalo Galván", layout="centered", initial_sidebar_state="collapsed")
 
@@ -452,17 +452,38 @@ def vista_admin():
             st.rerun()
 
         df = pd.read_sql("SELECT * FROM boletos", conn)
+        
+        # --- CÁLCULOS FINANCIEROS ---
         total_recaudado = df['pagado'].sum()
         boletos_vendidos = len(df[df['estatus'].isin(['Apartado', 'Pagado Total'])])
+        dinero_en_transito = (boletos_vendidos * 720) - total_recaudado
+        
+        # --- CUENTA REGRESIVA ---
+        hoy = datetime.date.today()
+        fecha_corte = datetime.date(2026, 9, 18)
+        dias_restantes = (fecha_corte - hoy).days
 
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Dinero recaudado", f"${total_recaudado:,.2f}")
-        c2.metric("Boletos colocados", f"{boletos_vendidos} / {META_BOLETOS}")
-        c3.metric("Faltante", f"${META_MONTO - total_recaudado:,.2f}")
+        # --- MÉTRICAS VISUALES ---
+        st.markdown("### Tablero Financiero")
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Recaudado (Real)", f"${total_recaudado:,.2f}")
+        c2.metric("En Tránsito (Deuda)", f"${dinero_en_transito:,.2f}")
+        c3.metric("Boletos Colocados", f"{boletos_vendidos} / {META_BOLETOS}")
+        
+        # Alerta visual si quedan pocos días
+        if dias_restantes > 0:
+            c4.metric("Días al Corte", f"{dias_restantes} días", "18 de Sep", delta_color="off")
+        else:
+            c4.metric("Días al Corte", "¡Corte hoy!", "- Urgente -", delta_color="inverse")
+
+        # Barra de progreso
+        avance = min(total_recaudado / META_MONTO, 1.0)
+        st.progress(avance, text=f"Meta de recaudación: {avance*100:.1f}% (${total_recaudado:,.0f} de ${META_MONTO:,.0f})")
 
         st.write("")
+        st.markdown("### Semáforo de Cobranza")
         
-        # Automatización: Crear link directo a WhatsApp pre-llenado
+        # Automatización de WhatsApp
         def crear_link_wa(row):
             if pd.isna(row['whatsapp']) or row['whatsapp'] == '': return None
             numero_limpio = ''.join(filter(str.isdigit, str(row['whatsapp'])))
@@ -485,32 +506,46 @@ Me mandas el comprobante por aquí en cuanto lo tengas para registrarlo en mi si
 
         df['Link_WA'] = df.apply(crear_link_wa, axis=1)
 
-        # Mostrar tabla en panel de administración
+        # Función para pintar filas (Semáforo)
+        def color_semaforo(val):
+            if val == 'Pagado Total': return 'background-color: #d4edda; color: #155724;' # Verde
+            elif val == 'Apartado': return 'background-color: #fff3cd; color: #856404;' # Amarillo
+            return '' # Blanco para disponibles
+        
+        # Aplicar estilos a la tabla y mostrarla
+        df_mostrar = df[['boleto', 'estatus', 'comprador', 'whatsapp', 'pagado', 'Link_WA']].copy()
+        
         st.dataframe(
-            df[['boleto', 'estatus', 'comprador', 'whatsapp', 'pagado', 'Link_WA']],
+            df_mostrar.style.map(color_semaforo, subset=['estatus']),
             column_config={
-                "pagado": st.column_config.NumberColumn("Pagado", format="$%f"),
+                "pagado": st.column_config.NumberColumn("Pagado", format="$%.2f"),
                 "Link_WA": st.column_config.LinkColumn("Contactar", display_text="Abrir Chat 💬")
             },
             hide_index=True,
             use_container_width=True
         )
 
-        st.subheader("Registrar cobro")
+        # --- ZONA DE COBROS ---
+        st.subheader("Registrar Cobro")
         with st.form("actualizar_pago"):
-            boleto_a_pagar = st.selectbox("Selecciona el boleto", df[df['estatus'] != 'Disponible']['boleto'].tolist())
-            monto_abono = st.number_input("Monto a abonar", min_value=0.0, step=50.0)
-            if st.form_submit_button("Registrar"):
-                if boleto_a_pagar:
-                    c.execute("SELECT pagado FROM boletos WHERE boleto=%s", (boleto_a_pagar,))
-                    pagado_actual = c.fetchone()[0]
-                    nuevo_pago = pagado_actual + monto_abono
-                    nuevo_estatus = "Pagado Total" if nuevo_pago >= 720 else "Apartado"
+            boletos_apartados = df[df['estatus'] != 'Disponible']['boleto'].tolist()
+            if not boletos_apartados:
+                st.info("Aún no hay boletos apartados para registrar cobros.")
+                st.form_submit_button("Registrar", disabled=True)
+            else:
+                boleto_a_pagar = st.selectbox("Selecciona el boleto", boletos_apartados)
+                monto_abono = st.number_input("Monto a abonar", min_value=0.0, step=50.0)
+                if st.form_submit_button("Registrar Abono"):
+                    if boleto_a_pagar:
+                        c.execute("SELECT pagado FROM boletos WHERE boleto=%s", (boleto_a_pagar,))
+                        pagado_actual = c.fetchone()[0]
+                        nuevo_pago = pagado_actual + monto_abono
+                        nuevo_estatus = "Pagado Total" if nuevo_pago >= 720 else "Apartado"
 
-                    c.execute("UPDATE boletos SET pagado=%s, estatus=%s WHERE boleto=%s", (nuevo_pago, nuevo_estatus, boleto_a_pagar))
-                    conn.commit()
-                    st.success("Cobro registrado correctamente.")
-                    st.rerun()
+                        c.execute("UPDATE boletos SET pagado=%s, estatus=%s WHERE boleto=%s", (nuevo_pago, nuevo_estatus, boleto_a_pagar))
+                        conn.commit()
+                        st.success(f"Abono de ${monto_abono} registrado correctamente al boleto {boleto_a_pagar}.")
+                        st.rerun()
 
 # --- 6. NAVEGADOR ---
 opcion = st.sidebar.radio("Menú", ["Sorteo (Público)", "Admin (Privado)"])
