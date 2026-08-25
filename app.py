@@ -360,7 +360,7 @@ def vista_publica():
     with st.expander("Promociones exclusivas con tu boleto"):
         st.caption("Tu boleto físico da acceso inmediato a estos beneficios en Puebla, además de una asesoría exclusiva.")
         render_benefit_table([
-            ("🌟 Motor GaLa (Bono VIP)", "Análisis cuantitativo de portafolio de inversión y simulación de riesgo utilizando mi plataforma financiera personal."),
+            ("🌟 Motor GaLa (Bono VIP)", "Sesión 1 a 1 por videollamada (45 min) de consultoría financiera. Te daré acceso temporal a mi software cuantitativo privado para analizar tu perfil de riesgo, armar una proyección de inversión adaptada a tu contexto y, al finalizar, descargarás un reporte en PDF con tu estrategia personalizada."),
             ("Berry Munch", "Un topping extra gratis."),
             ("Club Deportivo de Élite", "Inscripción sin costo, 20% de descuento el primer mes, fisioterapia y más."),
             ("Cosmetología Integral", "20% de descuento en faciales o masajes, 15% en depilación y en lipo sin bisturí (paquetes)."),
