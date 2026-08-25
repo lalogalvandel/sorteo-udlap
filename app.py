@@ -285,7 +285,7 @@ def vista_publica():
     st.markdown("""
     <div class="bio-card">
         <p>
-            ¡Hola! Me llena de gusto poder saludarte.<br><br>
+            ¡Hola! Que gusto poder saludarte, soy Lalo.<br><br>
             Ahorita estoy echándole todas las ganas a mi tercer semestre de Actuaría en la UDLAP. Vender estos boletos es clave para mí porque es lo que me ayuda a mantener mi beca y seguir estudiando.<br><br>
             Para agradecer tu apoyo, decidí armar algo único: al apartar tu número no solo te llevas la chance de ganar la casa, los autos o los cheques, sino que <b>te regalo una asesoría financiera privada 1 a 1</b> utilizando Motor GaLa, el software cuantitativo que yo mismo desarrollé (puedes ver los detalles más abajo).<br><br>
             ¡De corazón, mil gracias por echarme la mano y hacer equipo conmigo!
