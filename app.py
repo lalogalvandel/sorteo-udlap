@@ -278,17 +278,18 @@ def vista_publica():
     """, unsafe_allow_html=True)
 
     st.markdown("""
-    <p class="teaser">Participa por una <b>residencia valuada en $34,000,000 MXN</b>, totalmente amueblada,
-    además de autos y cheques en efectivo.</p>
+    <p class="teaser">Participa por una <b>residencia valuada en $34,000,000 MXN</b>, autos de lujo y cheques en efectivo.<br>
+    <span style="color: var(--gold); font-weight: 500;">Tu boleto incluye una sesión privada de análisis financiero (Bono VIP).</span></p>
     """, unsafe_allow_html=True)
 
     st.markdown("""
     <div class="bio-card">
         <p>
-            ¡Hola! Qué gusto saludarte.<br><br>
+            ¡Hola! Qué gusto saludarte, soy Lalo.<br><br>
             Ahorita estoy echándole todas las ganas a mi tercer semestre de Actuaría en la UDLAP. Vender estos boletos es clave para mí porque es lo que me ayuda a mantener mi beca y seguir estudiando.<br><br>
-            Al apartar tu número te llevas la chance de ganar la casa, un buen coche o un cheque millonario, y de paso, me das un empujón gigante para terminar mi carrera. 
-            <span class="firma">¡De corazón, mil gracias por echarme la mano! — Lalo :) </span>
+            Para agradecer tu apoyo, decidí armar algo único: al apartar tu número no solo te llevas la chance de ganar la casa, los autos o los cheques, sino que <b>te regalo una asesoría financiera privada 1 a 1</b> utilizando Motor GaLa, el software cuantitativo que yo mismo desarrollé (puedes ver los detalles más abajo).<br><br>
+            ¡De corazón, mil gracias por echarme la mano y hacer equipo conmigo!
+            <span class="firma">— Lalo :) </span>
         </p>
     </div>
     """, unsafe_allow_html=True)
