@@ -274,7 +274,12 @@ def vista_publica():
         <div class="eyebrow">Sorteo UDLAP &nbsp;·&nbsp; 40.ª edición</div>
         <div class="titulo-principal">Cuadragésimo Sorteo UDLAP</div>
         <div class="rule"></div>
-        <div class="meta">Boleto: $720 MXN &nbsp;·&nbsp; Sorteo: 21 de noviembre de 2026</div>
+        <div class="meta">
+            Boleto: $720 MXN &nbsp;·&nbsp; Sorteo: 21 de noviembre de 2026<br>
+            <span style="color: var(--gold-soft); font-size: 0.95rem; font-weight: 600; display: block; margin-top: 6px; letter-spacing: 0.03em;">
+                ¡Llévatelo hoy con $120 de enganche!
+            </span>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -427,7 +432,7 @@ def vista_publica():
         boletos_select = st.multiselect("¿Qué números te dan más suerte? *", boletos_lista)
         st.caption("Cada número tiene un costo de $720 MXN. Puedes seleccionar uno o varios.")
         metodo = st.radio("Método de pago preferido *",
-                          ["Pago Único (Transferencia $720)", "Plan 3 Quincenas (Enganche $120 + 2 de $300)"])
+                          ["Pago Único (Transferencia \\$720)", "Plan 3 Quincenas (Enganche \\$120 + 2 de \\$300)"])
 
         submit = st.form_submit_button("Apartar mi boleto")
 
