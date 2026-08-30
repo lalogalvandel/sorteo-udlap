@@ -539,17 +539,26 @@ def vista_admin():
         st.write("")
         st.markdown("### Semáforo de Cobranza")
         
-        # Automatización de WhatsApp
+        # Automatización de WhatsApp (Inteligente por Método de Pago)
         def crear_link_wa(row):
             if pd.isna(row['whatsapp']) or row['whatsapp'] == '': return None
             numero_limpio = ''.join(filter(str.isdigit, str(row['whatsapp'])))
             nombre_cliente = str(row['comprador']).split()[0]
+            metodo_elegido = str(row['metodo_pago'])
+            
+            # Ajuste de texto según lo que eligieron
+            if "Quincenas" in metodo_elegido:
+                monto_solicitado = "$120.00 MXN (Enganche)"
+                texto_plan = "el enganche de tu boleto"
+            else:
+                monto_solicitado = "$720.00 MXN (Pago total)"
+                texto_plan = "el pago de tu boleto"
             
             mensaje = f"""¡Hola {nombre_cliente}! Vi que apartaste el boleto {row['boleto']} del Sorteo UDLAP. ¡Mil gracias por apoyarme 😁🫶🏻! 
 
-Te escribo para pasarte los datos para el pago:
+Te escribo para pasarte los datos para {texto_plan}:
 
-*Moneda:* Peso Mexicano (MXN)
+*Monto:* {monto_solicitado}
 *Beneficiario:* Eduardo Galván Del Rio
 *CLABE:* 646990404098884683
 *Banco:* STP (Calle Varsovia 36, Piso 6, CDMX)
@@ -562,18 +571,18 @@ Me mandas el comprobante por aquí en cuanto lo tengas para registrarlo en mi si
 
         df['Link_WA'] = df.apply(crear_link_wa, axis=1)
 
-        # Función para pintar filas (Semáforo)
         def color_semaforo(val):
             if val == 'Pagado Total': return 'background-color: #d4edda; color: #155724;' # Verde
             elif val == 'Apartado': return 'background-color: #fff3cd; color: #856404;' # Amarillo
             return '' # Blanco para disponibles
         
-        # Aplicar estilos a la tabla y mostrarla
-        df_mostrar = df[['boleto', 'estatus', 'comprador', 'whatsapp', 'pagado', 'Link_WA']].copy()
+        # Agregamos 'metodo_pago' para que lo veas en tu tabla
+        df_mostrar = df[['boleto', 'estatus', 'comprador', 'metodo_pago', 'whatsapp', 'pagado', 'Link_WA']].copy()
         
         st.dataframe(
             df_mostrar.style.map(color_semaforo, subset=['estatus']),
             column_config={
+                "metodo_pago": "Plan elegido",
                 "pagado": st.column_config.NumberColumn("Pagado", format="$%.2f"),
                 "Link_WA": st.column_config.LinkColumn("Contactar", display_text="Abrir Chat 💬")
             },
