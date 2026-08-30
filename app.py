@@ -444,17 +444,25 @@ def vista_publica():
                     c.execute("UPDATE boletos SET estatus='Apartado', comprador=%s, whatsapp=%s, metodo_pago=%s WHERE boleto=%s", (nombre, whatsapp, metodo, b))
                 conn.commit()
                 
-                # REEMPLAZA ESTE NÚMERO CON TU CELULAR REAL (ej: 522221234567)
+                # REEMPLAZA ESTE NÚMERO CON TU CELULAR REAL
                 numero_lalo = "522212325875" 
                 
-                # LÓGICA INTELIGENTE: Singular vs Plural
-                if len(boletos_select) == 1:
+                # LÓGICA INTELIGENTE: Singular/Plural y Cálculo de Monto
+                cantidad = len(boletos_select)
+                if cantidad == 1:
                     texto_boletos = f"el boleto {boletos_select[0]}"
                 else:
                     boletos_str = ", ".join(boletos_select)
                     texto_boletos = f"los boletos {boletos_str}"
+                
+                if "Único" in metodo:
+                    monto = cantidad * 720
+                    texto_metodo = f"con *Pago Único*. ¡Pásame tus datos para hacerte la transferencia por ${monto:,.0f}!"
+                else:
+                    monto = cantidad * 120
+                    texto_metodo = f"con el *Plan de 3 Quincenas*. ¡Pásame tus datos para transferirte el enganche de ${monto:,.0f}!"
                     
-                mensaje_cliente = f"¡Hola Lalo! Acabo de apartar {texto_boletos} en tu página del Sorteo UDLAP. ¡Pásame tus datos para hacerte la transferencia!"
+                mensaje_cliente = f"¡Hola Lalo! Acabo de apartar {texto_boletos} en tu página {texto_metodo}"
                 link_wa_cliente = f"https://wa.me/{numero_lalo}?text={urllib.parse.quote(mensaje_cliente)}"
                 
                 st.success(f"¡Excelente, {nombre}! Tus números quedaron apartados en la base de datos.")
@@ -463,7 +471,7 @@ def vista_publica():
                 <div style="text-align: center; margin-top: 20px; margin-bottom: 10px;">
                     <p style="font-size: 1.1rem; color: var(--green); font-weight: bold;">Falta un último paso para asegurar tu lugar:</p>
                     <a href="{link_wa_cliente}" target="_blank" style="background-color: #25D366; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 1.1rem; display: inline-block; box-shadow: 0 4px 10px rgba(37, 211, 102, 0.3); font-family: 'Inter', sans-serif;">
-                        📲 Envíame un WhatsApp para confirmar
+                        Envíame un WhatsApp para confirmar
                     </a>
                 </div>
                 """, unsafe_allow_html=True)
