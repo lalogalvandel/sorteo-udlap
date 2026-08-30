@@ -3,6 +3,7 @@ import pandas as pd
 import psycopg2
 import urllib.parse
 import datetime
+
 # --- 1. CONFIGURACIÓN INICIAL ---
 st.set_page_config(page_title="Sorteo UDLAP | Lalo Galván", layout="centered", initial_sidebar_state="collapsed")
 
@@ -278,18 +279,16 @@ def vista_publica():
     """, unsafe_allow_html=True)
 
     st.markdown("""
-    <p class="teaser">Participa por una <b>residencia valuada en $34,000,000 MXN</b>, autos de lujo y cheques en efectivo.<br>
-    <span style="color: var(--gold); font-weight: 500;">Tu boleto incluye una sesión privada de análisis financiero (Bono VIP).</span></p>
+    <p class="teaser">Participa por una <b>residencia valuada en $34,000,000 MXN</b>, autos de lujo y cheques en efectivo.</p>
     """, unsafe_allow_html=True)
 
     st.markdown("""
     <div class="bio-card">
         <p>
-            ¡Hola! Que gusto poder saludarte, soy Lalo.<br><br>
+            ¡Hola! Qué gusto saludarte, soy Lalo.<br><br>
             Ahorita estoy echándole todas las ganas a mi tercer semestre de Actuaría en la UDLAP. Vender estos boletos es clave para mí porque es lo que me ayuda a mantener mi beca y seguir estudiando.<br><br>
-            Para agradecer tu apoyo, decidí armar algo único: al apartar tu número no solo te llevas la chance de ganar la casa, los autos o los cheques, sino que <b>te regalo una asesoría financiera privada 1 a 1</b> utilizando Motor GaLa, el software cuantitativo que yo mismo desarrollé (puedes ver los detalles más abajo).<br><br>
-            ¡De corazón, mil gracias por echarme la mano y hacer equipo conmigo!
-            <span class="firma">— Lalo :) </span>
+            Al apartar tu número te llevas la chance de ganar la casa, un buen coche o un cheque millonario, y de paso, me das un empujón gigante para terminar mi carrera.<br><br>
+            <span class="firma">¡De corazón, mil gracias por echarme la mano! — Lalo 🫶</span>
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -359,9 +358,8 @@ def vista_publica():
         ])
 
     with st.expander("Promociones exclusivas con tu boleto"):
-        st.caption("Tu boleto físico da acceso inmediato a estos beneficios en Puebla, además de una asesoría exclusiva.")
+        st.caption("Tu boleto físico da acceso inmediato a estos beneficios en Puebla.")
         render_benefit_table([
-            ("🌟 Motor GaLa (Bono VIP)", "Sesión 1 a 1 por videollamada (45 min) de consultoría financiera. Te daré acceso temporal a mi software cuantitativo privado para analizar tu perfil de riesgo, armar una proyección de inversión adaptada a tu contexto y, al finalizar, descargarás un reporte en PDF con tu estrategia personalizada."),
             ("Berry Munch", "Un topping extra gratis."),
             ("Club Deportivo de Élite", "Inscripción sin costo, 20% de descuento el primer mes, fisioterapia y más."),
             ("Cosmetología Integral", "20% de descuento en faciales o masajes, 15% en depilación y en lipo sin bisturí (paquetes)."),
@@ -441,8 +439,8 @@ def vista_publica():
                     c.execute("UPDATE boletos SET estatus='Apartado', comprador=%s, whatsapp=%s, metodo_pago=%s WHERE boleto=%s", (nombre, whatsapp, metodo, b))
                 conn.commit()
                 
-                # --- MAGIA DE REDIRECCIÓN A WHATSAPP ---
-                numero_lalo = "522212325875" # PON TU NÚMERO DE CELULAR AQUÍ
+                # REEMPLAZA ESTE NÚMERO CON TU CELULAR REAL (ej: 522221234567)
+                numero_lalo = "522212325875" 
                 
                 # LÓGICA INTELIGENTE: Singular vs Plural
                 if len(boletos_select) == 1:
@@ -567,7 +565,7 @@ Me mandas el comprobante por aquí en cuanto lo tengas para registrarlo en mi si
                 "Link_WA": st.column_config.LinkColumn("Contactar", display_text="Abrir Chat 💬")
             },
             hide_index=True,
-            width='stretch'
+            use_container_width=True
         )
 
         # --- ZONA DE COBROS ---
