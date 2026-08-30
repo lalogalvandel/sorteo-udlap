@@ -288,7 +288,7 @@ def vista_publica():
             ¡Hola! Qué gusto saludarte, soy Lalo.<br><br>
             Ahorita estoy echándole todas las ganas a mi tercer semestre de Actuaría en la UDLAP. Vender estos boletos es clave para mí porque es lo que me ayuda a mantener mi beca y seguir estudiando.<br><br>
             Al apartar tu número te llevas la chance de ganar la casa, un buen coche o un cheque millonario, y de paso, me das un empujón gigante para terminar mi carrera.<br><br>
-            <span class="firma">¡De corazón, mil gracias por echarme la mano! — Lalo 🫶</span>
+            <span class="firma">¡De corazón, mil gracias por echarme la mano! — Lalo :) </span>
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -449,7 +449,7 @@ def vista_publica():
                     boletos_str = ", ".join(boletos_select)
                     texto_boletos = f"los boletos {boletos_str}"
                     
-                mensaje_cliente = f"¡Hola Lalo! 👋 Acabo de apartar {texto_boletos} en tu página del Sorteo UDLAP. ¡Pásame tus datos para hacerte la transferencia!"
+                mensaje_cliente = f"¡Hola Lalo! Acabo de apartar {texto_boletos} en tu página del Sorteo UDLAP. ¡Pásame tus datos para hacerte la transferencia!"
                 link_wa_cliente = f"https://wa.me/{numero_lalo}?text={urllib.parse.quote(mensaje_cliente)}"
                 
                 st.success(f"¡Excelente, {nombre}! Tus números quedaron apartados en la base de datos.")
