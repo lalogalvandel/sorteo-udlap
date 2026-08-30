@@ -277,7 +277,7 @@ def vista_publica():
         <div class="meta">
             Boleto: $720 MXN &nbsp;·&nbsp; Sorteo: 21 de noviembre de 2026<br>
             <span style="color: var(--gold-soft); font-size: 0.95rem; font-weight: 600; display: block; margin-top: 6px; letter-spacing: 0.03em;">
-                ¡Llévatelo hoy con $120 de enganche!
+                ¡Aparta el tuyo hoy con $120 de enganche!
             </span>
         </div>
     </div>
